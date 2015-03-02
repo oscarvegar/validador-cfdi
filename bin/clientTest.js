@@ -5,7 +5,7 @@ var parseString = require('xml2js').parseString;
  
  var url = 'https://consultaqr.facturaelectronica.sat.gob.mx/ConsultaCFDIService.svc?singleWsdl';
 
-watch('.', {recursive: false},function(filename) {
+watch('../logic/new/', {recursive: false},function(filename) {
   console.log(filename, ' changed.');
   try{
   	var contents = fs.readFileSync(filename).toString();
@@ -16,7 +16,7 @@ watch('.', {recursive: false},function(filename) {
   parseString(contents, function (err, result) {
   	//console.dir(JSON.stringify(result));
   	if(result['cfdi:Comprobante'] === undefined){
-  		fs.copy(filename, './error/'+filename, { replace: true },function (err) {
+  		fs.copy(filename, filename.replace(/\/new\//g, "error"), { replace: true },function (err) {
 			  if (err) {
 			    throw err;
 			  }
@@ -45,11 +45,11 @@ watch('.', {recursive: false},function(filename) {
 	          //filename = filename.replace(/ /g, "_");
 	          console.log(filename)
 	          if(result.ConsultaResult.Estado == 'Vigente'){
-		          	fs.copy(filename, './valid/'+filename, { replace: true },function (err) {
+		          	fs.copy(filename, filename.replace(/\/new\//g, "/valid/"), { replace: true },function (err) {
 											  if (err) {
 											    throw err;
 											  }
-											  console.log("Moved "+filename+" to vigente");
+											  console.log("Moved "+filename+" to valid");
 											  fs.rmrfSync(filename);
 											});
 											}else{
