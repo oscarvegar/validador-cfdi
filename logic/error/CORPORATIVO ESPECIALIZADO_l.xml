@@ -1,0 +1,104 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<cfdi:Comprobante xmlns:cfdi="http://www.sat.gob.mx/cfd/3" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" LugarExpedicion="ECATEPEC, ESTADO DE MEXICO" Moneda="MXN" TipoCambio="1.00000" certificado="MIIEazCCA1OgAwIBAgIUMDAwMDEwMDAwMDAyMDI2NzA2NjgwDQYJKoZIhvcNAQEFBQAwggGVMTgwNgYDVQQDDC9BLkMuIGRlbCBTZXJ2aWNpbyBkZSBBZG1pbmlzdHJhY2nDs24gVHJpYnV0YXJpYTEvMC0GA1UECgwmU2VydmljaW8gZGUgQWRtaW5pc3RyYWNpw7NuIFRyaWJ1dGFyaWExODA2BgNVBAsML0FkbWluaXN0cmFjacOzbiBkZSBTZWd1cmlkYWQgZGUgbGEgSW5mb3JtYWNpw7NuMSEwHwYJKoZIhvcNAQkBFhJhc2lzbmV0QHNhdC5nb2IubXgxJjAkBgNVBAkMHUF2LiBIaWRhbGdvIDc3LCBDb2wuIEd1ZXJyZXJvMQ4wDAYDVQQRDAUwNjMwMDELMAkGA1UEBhMCTVgxGTAXBgNVBAgMEERpc3RyaXRvIEZlZGVyYWwxFDASBgNVBAcMC0N1YXVodMOpbW9jMRUwEwYDVQQtEwxTQVQ5NzA3MDFOTjMxPjA8BgkqhkiG9w0BCQIML1Jlc3BvbnNhYmxlOiBDZWNpbGlhIEd1aWxsZXJtaW5hIEdhcmPDrWEgR3VlcnJhMB4XDTEyMTIyMDE4NTgyN1oXDTE2MTIyMDE4NTgyN1owgawxGjAYBgNVBAMTEVJFQ1JFRkFNIFNBIERFIENWMRowGAYDVQQpExFSRUNSRUZBTSBTQSBERSBDVjEaMBgGA1UEChMRUkVDUkVGQU0gU0EgREUgQ1YxJTAjBgNVBC0THFJFQzk4MDgyN1RSNiAvIE1BTU03MjA3MDNHTDkxHjAcBgNVBAUTFSAvIE1BTU03MjA3MDNIREZSUlIwMTEPMA0GA1UECxMGTUFUUklaMIGfMA0GCSqGSIb3DQEBAQUAA4GNADCBiQKBgQC3VNJHZYJoOnGAtXhm6Yzaj9nGENADYLT1NKXo8E/N3MB/INfxEFAbJYKJePRgUaEr6l0WuontsgPB4J/hAT10Ab5r+QKyaBpeBZsjGl+k6YitQkOIPQvMFLerWoVyDj7wSx+2dJd+FjZygFQ5c/HjeQWjTib0AWLZoA1+wZKXVwIDAQABox0wGzAMBgNVHRMBAf8EAjAAMAsGA1UdDwQEAwIGwDANBgkqhkiG9w0BAQUFAAOCAQEAZx9jJIl32bKllVEg6F0/0b2poY9CuXb5o53OW9Y6VzUjvv289tEmANra1Q/qkAUA+RgBeUuY6dQzIogTXTM3pQxxxHlgkLrIjSMZn9ZpJ1jpAH+gP5SlK29+mPnewPZFD/3Yuu/DSJBOns+0ZEgAak4XvZwTwxRsGmv9YTWC7+x0xkUnNTXFzghKD6RHaGMoM+r5oA9L+o7aXnrnBHRdtIaQprlqBSfmBxGYSmZIpw1SxU4j8UN6SafNZTPTBsKCD7ek+e5aBFzKaTfa/IPlqBq5EObMDmCUPlG0rW9oIPZJtxItfV0EV5KHumn/aJciYVEJBEWnNlZQAqxl2q4txg==" condicionesDePago="Pago Inmediato" fecha="2015-02-20T11:39:08" folio="1542" formaDePago="Pago en una Sola Exhibición" metodoDePago="EFECTIVO" noCertificado="00001000000202670668" sello="irFKnxJbYx/URL4AACF5DKGXq811M9hxwfNUjMjRVqnEYJWgnxhN5bjG8eG9PejLX+Q+haiiuiW8+TmrqQ84XtSA706DXQYoVIIOMNo2eGJjR6c72JcQ3WFuJet+FgZxDZh5jcpb4D6Qvux7jRpx+i6S2/Hy+WnbcaqMoByXuoA=" serie="LAE" subTotal="258.62000" tipoDeComprobante="ingreso" total="300.00000" version="3.2" xsi:schemaLocation="http://www.sat.gob.mx/cfd/3 http://www.sat.gob.mx/sitio_internet/cfd/3/cfdv32.xsd">
+   <cfdi:Emisor nombre="RECREFAM, S.A. DE C.V." rfc="REC980827TR6">
+      <cfdi:DomicilioFiscal calle="BLVD. ADOLFO LOPEZ MATEOS" codigoPostal="01790" colonia="LOMAS DE SAN ANGEL INN" estado="DF" localidad="ALVARO OBREGON" municipio="MEXICO D.F." noExterior="183" noInterior="2" pais="Mexico"/>
+      <cfdi:ExpedidoEn calle="Av. Central Mz. 4 Lt. 2 Local SA 09" codigoPostal="55075" colonia="Conjunto Urbano Las Americas" estado="Estado de México" localidad="Ecatepec de Morelos" pais="Mexico"/>
+      <cfdi:RegimenFiscal Regimen="RÉGIMEN GENERAL DE LEY PERSONAS MORALES"/>
+   </cfdi:Emisor>
+   <cfdi:Receptor nombre="CORPORATIVO ESPECIALIZADO EN TECNOLOGIA S.A. DE C.V.." rfc="CPT001030R38">
+      <cfdi:Domicilio calle="PASEO DE LA REFORMA NO. 300 INT. 17" codigoPostal="06600" colonia="JUAREZ" estado="DISTRITO FEDERAL" localidad="CUAHUTEMOC" municipio="CUAHUTEMOC" pais="Mexico"/>
+   </cfdi:Receptor>
+   <cfdi:Conceptos>
+      <cfdi:Concepto cantidad="0.00000" descripcion="VENTA E-DINERO RECORCARD" importe="258.62000" unidad="SERV" valorUnitario="258.62000"/>
+   </cfdi:Conceptos>
+   <cfdi:Impuestos totalImpuestosTrasladados="41.38000">
+      <cfdi:Traslados>
+         <cfdi:Traslado importe="41.38000" impuesto="IVA" tasa="16.00000"/>
+      </cfdi:Traslados>
+   </cfdi:Impuestos>
+   <cfdi:Complemento>
+<tfd:TimbreFiscalDigital xmlns:tfd="http://www.sat.gob.mx/TimbreFiscalDigital" FechaTimbrado="2015-02-20T11:39:09" UUID="0717837F-804E-46B2-8B14-D176C151E707" noCertificadoSAT="00001000000203631919" selloCFD="irFKnxJbYx/URL4AACF5DKGXq811M9hxwfNUjMjRVqnEYJWgnxhN5bjG8eG9PejLX+Q+haiiuiW8+TmrqQ84XtSA706DXQYoVIIOMNo2eGJjR6c72JcQ3WFuJet+FgZxDZh5jcpb4D6Qvux7jRpx+i6S2/Hy+WnbcaqMoByXuoA=" selloSAT="jcXiWy3HUydTUTPXz0zPtRfF5mbkbSLbqFv3C2EC7uYz29uj0Ll3xmPL8wcvbVChHiuEoCWO/ePyb5CJewX+IvRv7g0n//BlQqk0fYQabpJDcfr7sjl4FIWSsVPXd18/zhJV+pMzKyLIoUTvuAIfiQp2DGIHy5vIQSqB1n3VJrU=" version="1.0" xsi:schemaLocation="http://www.sat.gob.mx/TimbreFiscalDigital http://www.sat.gob.mx/TimbreFiscalDigital/TimbreFiscalDigital.xsd"/>
+</cfdi:Complemento>
+<cfdi:Addenda>
+      <requestForPayment DeliveryDate="2015-02-20" contentVersion="1.3.1" documentStatus="ORIGINAL" documentStructureVersion="AMC7.1" type="SimpleInvoiceType">
+         <requestForPaymentIdentification>
+            <entityType>INVOICE</entityType>
+            <uniqueCreatorIdentification>LAE1542</uniqueCreatorIdentification>
+         </requestForPaymentIdentification>
+         <specialInstruction code="AAB">
+            <text>Pago Inmediato</text>
+         </specialInstruction>
+         <specialInstruction code="ZZZ">
+            <text>TRESCIENTOS PESOS 00/100 M.N.</text>
+         </specialInstruction>
+         <specialInstruction code="REG">
+            <text>RÉGIMEN GENERAL DE LEY PERSONAS MORALES</text>
+         </specialInstruction>
+         <AdditionalInformation>
+            <referenceIdentification type="IV">LAE1542</referenceIdentification>
+         </AdditionalInformation>
+         <buyer>
+            <gln>0000000000000</gln>
+         </buyer>
+         <InvoiceCreator>
+            <nameAndAddress>
+               <name>SUCURSAL</name>
+               <colony>Conjunto Urbano Las Americas</colony>
+               <state>Estado de México</state>
+               <country>Mexico</country>
+            </nameAndAddress>
+         </InvoiceCreator>
+         <currency currencyISOCode="MXN">
+            <currencyFunction>BILLING_CURRENCY</currencyFunction>
+            <rateOfChange>1.00000</rateOfChange>
+         </currency>
+         <lineItem number="1" type="SimpleInvoiceLineItemType">
+            <tradeItemIdentification>
+               <gtin>0</gtin>
+            </tradeItemIdentification>
+            <tradeItemDescriptionInformation>
+               <longText>VENTA E-DINERO RECORCARD</longText>
+            </tradeItemDescriptionInformation>
+            <invoicedQuantity unitOfMeasure="EA">0.00000</invoicedQuantity>
+            <grossPrice>
+               <Amount>258.62000</Amount>
+            </grossPrice>
+            <netPrice>
+               <Amount>258.62000</Amount>
+            </netPrice>
+            <tradeItemTaxInformation>
+               <taxTypeDescription>VAT</taxTypeDescription>
+               <tradeItemTaxAmount>
+                  <taxPercentage>16.00000</taxPercentage>
+                  <taxAmount>41.38000</taxAmount>
+               </tradeItemTaxAmount>
+            </tradeItemTaxInformation>
+            <totalLineAmount>
+               <grossAmount>
+                  <Amount>258.62000</Amount>
+               </grossAmount>
+               <netAmount>
+                  <Amount>258.62000</Amount>
+               </netAmount>
+            </totalLineAmount>
+         </lineItem>
+         <totalAmount>
+            <Amount>258.62000</Amount>
+         </totalAmount>
+         <baseAmount>
+            <Amount>258.62000</Amount>
+         </baseAmount>
+         <taxAmount>
+            <Amount>41.38</Amount>
+         </taxAmount>
+         <tax type="VAT">
+            <taxPercentage>16.00000</taxPercentage>
+            <taxAmount>41.38000</taxAmount>
+            <taxCategory>TRANSFERIDO</taxCategory>
+         </tax>
+         <payableAmount>
+            <Amount>300.00000</Amount>
+         </payableAmount>
+      </requestForPayment>
+   </cfdi:Addenda>
+</cfdi:Comprobante>

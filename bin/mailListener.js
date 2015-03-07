@@ -1,8 +1,8 @@
 var MailListener = require("mail-listener2");
+var fs =  require('fs.extra');
  
  var mailcfg = require("../config/mail-cfg");
  mailcfg.mailConfig.attachmentOptions =  { directory: "../logic/attachments/" };
- console.log(mailcfg.mailConfig)
 
 var mailListener = new MailListener(mailcfg.mailConfig);
  
@@ -25,12 +25,32 @@ mailListener.on("error", function(err){
  
 mailListener.on("mail", function(mail, seqno, attributes){
   // do something with mail object including attachments 
-  console.log("emailParsed", mail);
+  //console.log("emailParsed", mail);
   // mail processing code goes here 
 });
  
-mailListener.on("attachment", function(attachment){
-  console.log("ATTACHMENT RECEIVED");
+mailListener.on("attachment", function(attachment,mail){
+  console.log("> > > > > ATTACHMENT RECEIVED < < < < <");
   console.log(attachment);
+  if(attachment.contentType.search(/\/xml/)>-1){
+  	console.log(">>> ES XML. Moviendo archivo a carpeta NEW");
+  	fs.move('../logic/attachments/'+attachment.generatedFileName, '../logic/new/'+attachment.generatedFileName, function (err) {
+	  if (err) {
+	    console.log("XXXXX OCURRIO UN ERROR INESPERADO AL MOVER EL ARCHIVO XXXXX");
+	    console.log(err);
+	    return;
+	  }
+	  console.log("Moved "+attachment.fileName+" to logic/new/");
+	});
+  }else{
+  	console.log("NO ES XML. Eliminando archivo "+attachment.generatedFileName)
+  	fs.unlink('../logic/attachments/'+attachment.generatedFileName, function (err) {
+	  if (err) {
+	    console.log("XXXXX OCURRIO UN ERROR INESPERADO AL ELIMINAR EL ARCHIVO XXXXX");
+	    console.log(err);
+	    return;
+	  }
+	});
+  }
 });
  
