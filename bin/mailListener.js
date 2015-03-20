@@ -31,19 +31,39 @@ mailListener.on("mail", function(mail, seqno, attributes){
  
 mailListener.on("attachment", function(attachment,mail){
   console.log("> > > > > ATTACHMENT RECEIVED < < < < <");
-  console.log(attachment);
+  //console.log(mail);
   if(attachment.contentType.search(/\/xml/)>-1){
-  	console.log(">>> ES XML. Moviendo archivo a carpeta NEW");
-  	fs.move('../logic/attachments/'+attachment.generatedFileName, '../logic/new/'+attachment.generatedFileName, function (err) {
+	 console.log(">>> ES XML. Moviendo archivo a carpeta NEW");
+	 fs.move('../logic/attachments/'+attachment.generatedFileName, '../logic/new/'+attachment.generatedFileName, function (err) {
 	  if (err) {
-	    console.log("XXXXX OCURRIO UN ERROR INESPERADO AL MOVER EL ARCHIVO XXXXX");
+	    console.log("XXXXX OCURRIO UN ERROR INESPERADO AL MOVER EL ARCHIVO XML XXXXX");
 	    console.log(err);
 	    return;
 	  }
 	  console.log("Moved "+attachment.fileName+" to logic/new/");
-	});
+   });
+  }else if(attachment.contentType.search(/\/pdf/)>-1){
+    var xmlname = null;
+    console.log(">>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>> MAIL >>>>>>>>>>>>>>>>>>>>>>>>>")
+    for(var i in mail.attachments){
+      var att = mail.attachments[i];
+      if(att.contentType.search(/\/xml/)>-1){
+        xmlname = attachment.generatedFileName;
+        console.log(xmlname)
+      }
+    }
+    if(xmlname == null)return;
+   console.log(">>> ES PDF. Moviendo archivo a carpeta PFD");
+   fs.move('../logic/attachments/'+attachment.generatedFileName, '../logic/pdf/'+xmlname.replace(".xml",".pdf"), function (err) {
+    if (err) {
+      console.log("XXXXX OCURRIO UN ERROR INESPERADO AL MOVER EL ARCHIVO PDF XXXXX");
+      console.log(err);
+      return;
+    }
+    console.log("Moved "+attachment.fileName+" to logic/pdf/");
+   });
   }else{
-  	console.log("NO ES XML. Eliminando archivo "+attachment.generatedFileName)
+  	console.log("NO ES XML ni PDF. Eliminando archivo "+attachment.generatedFileName)
   	fs.unlink('../logic/attachments/'+attachment.generatedFileName, function (err) {
 	  if (err) {
 	    console.log("XXXXX OCURRIO UN ERROR INESPERADO AL ELIMINAR EL ARCHIVO XXXXX");
