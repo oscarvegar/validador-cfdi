@@ -13,3 +13,22 @@ exports.mailConfig = {
   attachments: true, // download attachments as they are encountered to the project directory 
   attachmentOptions: { directory: "../logic/attachments/" } // specify a download directory for attachments 
 };
+
+exports.transporterConfig = {
+    host:"mail.grupointecsa.com.mx",
+    port:26,
+    secure: false,
+    ignoreTLS:true,
+    auth: {
+        user: 'ovega@grupointecsa.com.mx',
+        pass: 'OV$2015'
+    }
+}
+
+exports.mailOptions = {
+    from: 'Validador Factura <ovega@grupointecsa.com.mx>', // sender address
+    to: 'oscarman2001@hotmail.com', // list of receivers
+    subject: 'Factura Inválida', // Subject line
+    //text: 'Factura Inválida', // plaintext body
+    //html: '<b>La factura</b>' // html body
+}

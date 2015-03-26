@@ -8,24 +8,27 @@ var unirest = require('unirest');
 client = new Client();
 var auth = null;
 
-client.registerMethod("authenticationtokens","http://mfiles-gi.cloudapp.net/REST/server/authenticationtokens","POST");
-client.registerMethod("authenticationtoken","http://mfiles-gi.cloudapp.net/REST/session/authenticationtoken","GET");
-client.registerMethod("createObject","http://mfiles-gi.cloudapp.net/REST/objects/0","POST");
-client.registerMethod("files","http://mfiles-gi.cloudapp.net/REST/files","POST");
+client.registerMethod("authenticationtokens",mfilesCfg.mfilesConfig.authenticationTokensURL,"POST");
+client.registerMethod("createObject",mfilesCfg.mfilesConfig.createObjectURL,"POST");
+client.registerMethod("files",mfilesCfg.mfilesConfig.uploadFilesURL,"POST");
+client.registerMethod("createVendor",mfilesCfg.mfilesConfig.createVendorURL,"POST");
 
-var loginInfo = { username: "Administrator",password:"Intecsa12*",VaultGuid: "59E3E2C4-3B7A-4034-B8F6-88DCF894F2B6" };
 console.log("OBSERVANDO CARPETA logic/valid")
 watch('../logic/valid/', {recursive: false},function(filename) {
 	if(filename.search(/.xml/)<0)
 		return;
+	if(!fs.existsSync(filename)){
+		return
+	}
 	var args = {
 	  headers:{"Content-Type": "application/json"} 
 	};
-	args.data = loginInfo;
+	args.data = mfilesCfg.mfilesConfig.loginInfo;
 	client.methods.authenticationtokens(args,function(data,response){
 		data = JSON.parse(data);
 		auth = data.Value;
 		var singleFilename = filename.replace("../logic/valid/","").replace(".xml","");
+
 		var file = fs.readFileSync(filename,'utf8');
 		var fileRes = fs.readFileSync(filename.replace(".xml",".txt"),'utf8');
 
@@ -39,7 +42,7 @@ watch('../logic/valid/', {recursive: false},function(filename) {
 			var rfcEmisor = result['cfdi:Comprobante']['cfdi:Emisor'][0]['$']["rfc"];
   			var uuid = result['cfdi:Comprobante']['cfdi:Complemento'][0]['tfd:TimbreFiscalDigital'][0]['$']['UUID'];
   			var folio = result['cfdi:Comprobante']['$']['folio'];
-
+  			var vendorName = result['cfdi:Comprobante']['cfdi:Emisor'][0]['$']["nombre"];
 			console.log("LLAMA A FILES: ")
 			//console.log(args)
 			client.methods.files(args,function(data,response){
@@ -53,10 +56,10 @@ watch('../logic/valid/', {recursive: false},function(filename) {
 					.end(function (response) {
 						console.log(response.body)
 					  pdfFILE = response.body;
-					  createObject(serie,rfcEmisor,uuid,folio,xmlFILE,txtFILE,pdfFILE,fileRes,singleFilename)
+					  createObject(serie,rfcEmisor,uuid,folio,xmlFILE,txtFILE,pdfFILE,fileRes,singleFilename,vendorName)
 					});
 				}else{
-					createObject(serie,rfcEmisor,uuid,folio,xmlFILE,txtFILE,null,fileRes,singleFilename)
+					createObject(serie,rfcEmisor,uuid,folio,xmlFILE,txtFILE,null,fileRes,singleFilename,vendorName)
 				}
 			})
 
@@ -65,12 +68,13 @@ watch('../logic/valid/', {recursive: false},function(filename) {
 	});
 });
 
-function createObject(serie,rfcEmisor,uuid,folio,xmlFILE,txtFILE,pdfFILE,fileRes,singleFilename){
+function createObject(serie,rfcEmisor,uuid,folio,xmlFILE,txtFILE,pdfFILE,fileRes,singleFilename,vendorName){
 	args = {
 			headers:{"Content-Type": "application/octet-stream","X-Authentication":auth},
 			data:fileRes
 	};
 	client.methods.files(args,function(data,response){
+		var fileObject = JSON.parse(fileRes);
 		console.log(data);
 		txtFILE = JSON.parse(data);
 		args = {
@@ -85,6 +89,13 @@ function createObject(serie,rfcEmisor,uuid,folio,xmlFILE,txtFILE,pdfFILE,fileRes
 	        if(pdfFILE!=null){
 	        	filesUP.push({UploadID:pdfFILE.UploadID,Title:singleFilename,Extension:"pdf",Size:pdfFILE.Size});
 	        }
+	        var respuestaWS = 0;
+	        if(fileObject.status === 0)
+	        	respuestaWS = mfilesCfg.mfilesConfig.estadoSat.OK 
+	        else if(fileObject.status === -1)
+	        	respuestaWS = mfilesCfg.mfilesConfig.estadoSat.INVALIDO 
+	        else if(fileObject.status === -2)
+	        	respuestaWS = mfilesCfg.mfilesConfig.estadoSat.NOENCONTRADO 
 	        args = {
 		 		headers:{"Content-Type": "application/json","X-Authentication":auth},
 		 		data:{
@@ -119,7 +130,7 @@ function createObject(serie,rfcEmisor,uuid,folio,xmlFILE,txtFILE,pdfFILE,fileRes
 		                },{
 		                    // ESTADO SAT.
 		                    PropertyDef: mfilesCfg.mfilesConfig.estadoSatPD,
-		                    TypedValue: { DataType: 9, Lookup: { Item: mfilesCfg.mfilesConfig.estadoSat.OK }}
+		                    TypedValue: { DataType: 9, Lookup: { Item: respuestaWS }}
 		                }],
 		            Files: filesUP
 	        	}
@@ -129,11 +140,48 @@ function createObject(serie,rfcEmisor,uuid,folio,xmlFILE,txtFILE,pdfFILE,fileRes
 				args.data.PropertyValues.push({PropertyDef: mfilesCfg.mfilesConfig.customer,
 		                    TypedValue: { DataType: 10, Lookups: [{ Item: proveedorID }]  }
 		                });
+
+				client.methods.createObject(args,function(data,response){
+					console.log(data);
+				});
+			}else{
+				var argsProv = {
+					headers:{"Content-Type": "application/json","X-Authentication":auth},
+					data:{
+					    PropertyValues: [
+					    	{
+			                    // Class.
+			                    PropertyDef: 100,
+			                    TypedValue: { DataType: 9, Lookup: { Item: 98 } }
+			                },
+					    	{
+					            // RFC
+						        PropertyDef: 1164,
+						        TypedValue: { DataType: 1, Value:rfcEmisor }
+					    	},
+					    	{
+					            // Corporate?
+						        PropertyDef: 1183,
+						        TypedValue: { DataType: 8, Value:true }
+					    	},
+					    	{
+					            // Name
+						        PropertyDef: 1110,
+						        TypedValue: { DataType: 1, Value:vendorName}
+					    	}]
+			    	}
+			    }
+			    client.methods.createVendor(argsProv,function(data,response){
+			    	proveedorID = JSON.parse(data).ObjVer.ID;
+			    	args.data.PropertyValues.push({PropertyDef: mfilesCfg.mfilesConfig.customer,
+	                    TypedValue: { DataType: 10, Lookups: [{ Item: proveedorID }]  }
+	                });
+			    	client.methods.createObject(args,function(data,response){
+						console.log(data);
+					});
+			    })
 			}
 	        
-			client.methods.createObject(args,function(data,response){
-				console.log(data);
-			});
 	    });
 	});
 }

@@ -1,5 +1,6 @@
 var MailListener = require("mail-listener2");
 var fs =  require('fs.extra');
+var fse =  require('fs-extra');
  
  var mailcfg = require("../config/mail-cfg");
  mailcfg.mailConfig.attachmentOptions =  { directory: "../logic/attachments/" };
@@ -34,7 +35,7 @@ mailListener.on("attachment", function(attachment,mail){
   //console.log(mail);
   if(attachment.contentType.search(/\/xml/)>-1){
 	 console.log(">>> ES XML. Moviendo archivo a carpeta NEW");
-	 fs.move('../logic/attachments/'+attachment.generatedFileName, '../logic/new/'+attachment.generatedFileName, function (err) {
+	 fse.move('../logic/attachments/'+attachment.generatedFileName, '../logic/new/'+attachment.generatedFileName, {clobber:true},function (err) {
 	  if (err) {
 	    console.log("XXXXX OCURRIO UN ERROR INESPERADO AL MOVER EL ARCHIVO XML XXXXX");
 	    console.log(err);
@@ -54,7 +55,7 @@ mailListener.on("attachment", function(attachment,mail){
     }
     if(xmlname == null)return;
    console.log(">>> ES PDF. Moviendo archivo a carpeta PFD");
-   fs.move('../logic/attachments/'+attachment.generatedFileName, '../logic/pdf/'+xmlname.replace(".xml",".pdf"), function (err) {
+   fse.move('../logic/attachments/'+attachment.generatedFileName, '../logic/pdf/'+xmlname.replace(".xml",".pdf"), {clobber:true},function (err) {
     if (err) {
       console.log("XXXXX OCURRIO UN ERROR INESPERADO AL MOVER EL ARCHIVO PDF XXXXX");
       console.log(err);
