@@ -45,7 +45,7 @@ mailListener.on("attachment", function(attachment,mail){
    });
   }else if(attachment.contentType.search(/\/pdf/)>-1){
     var xmlname = null;
-    console.log(">>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>> MAIL >>>>>>>>>>>>>>>>>>>>>>>>>")
+    console.log(">>>>> MAIL",mail)
     for(var i in mail.attachments){
       var att = mail.attachments[i];
       if(att.contentType.search(/\/xml/)>-1){
