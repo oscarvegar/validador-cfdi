@@ -1,6 +1,6 @@
 exports.mailConfig = {
-  username: "ovega@grupointecsa.com.mx",
-  password: "OV$2015",
+  username: "factest@grupointecsa.com.mx",
+  password: "MFiles2015",
   host: "mail.grupointecsa.com.mx",
   port: 993, // imap port 
   tls: true,
