@@ -7,8 +7,8 @@ exports.mailConfig = {
   tlsOptions: { rejectUnauthorized: false },
   mailbox: "INBOX", // mailbox to monitor 
   searchFilter: ["UNSEEN"], // the search filter being used after an IDLE notification has been retrieved 
-  markSeen: false, // all fetched email willbe marked as seen and not fetched next time 
-  fetchUnreadOnStart: false, // use it only if you want to get all unread email on lib start. Default is `false`, 
+  markSeen: true, // all fetched email willbe marked as seen and not fetched next time 
+  fetchUnreadOnStart: true, // use it only if you want to get all unread email on lib start. Default is `false`, 
   //mailParserOptions: {streamAttachments: true}, // options to be passed to mailParser lib. 
   attachments: true, // download attachments as they are encountered to the project directory 
   attachmentOptions: { directory: "../logic/attachments/" } // specify a download directory for attachments 
@@ -20,13 +20,15 @@ exports.transporterConfig = {
     secure: false,
     ignoreTLS:true,
     auth: {
-        user: 'ovega@grupointecsa.com.mx',
-        pass: 'OV$2015'
+        //user: 'ovega@grupointecsa.com.mx',
+        //pass: 'OV$2015'
+        user: 'factest@grupointecsa.com.mx',
+        pass: 'MFiles2015'
     }
 }
 
 exports.mailOptions = {
-    from: 'Validador Factura <ovega@grupointecsa.com.mx>', // sender address
+    from: 'Validador Factura <factest@grupointecsa.com.mx>', // sender address
     to: 'oscarman2001@hotmail.com', // list of receivers
     subject: 'Factura Inválida', // Subject line
     //text: 'Factura Inválida', // plaintext body

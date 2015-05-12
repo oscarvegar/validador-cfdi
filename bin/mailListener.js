@@ -25,20 +25,21 @@ mailListener.on("error", function(err){
 });
  
 mailListener.on("mail", function(mail, seqno, attributes){
+  //console.log("> > > > > MAIL RECEIVED < < < < <",mail.text);
   // do something with mail object including attachments 
   //console.log("emailParsed", mail);
   // mail processing code goes here 
 });
  
 mailListener.on("attachment", function(attachment,mail){
-  console.log("> > > > > ATTACHMENT RECEIVED < < < < <");
+  console.log("> > > > > ATTACHMENT RECEIVED < < < < <",attachment.contentType);
   //console.log(mail);
   if(attachment.contentType.search(/\/xml/)>-1){
 	 console.log(">>> ES XML. Moviendo archivo a carpeta NEW");
 	 fse.move('../logic/attachments/'+attachment.generatedFileName, '../logic/new/'+attachment.generatedFileName, {clobber:true},function (err) {
 	  if (err) {
-	    console.log("XXXXX OCURRIO UN ERROR INESPERADO AL MOVER EL ARCHIVO XML XXXXX");
-	    console.log(err);
+	    console.error("XXXXX OCURRIO UN ERROR INESPERADO AL MOVER EL ARCHIVO XML XXXXX");
+	    console.error(err);
 	    return;
 	  }
 	  console.log("Moved "+attachment.fileName+" to logic/new/");
@@ -64,7 +65,7 @@ mailListener.on("attachment", function(attachment,mail){
     console.log("Moved "+attachment.fileName+" to logic/pdf/");
    });
   }else{
-  	console.log("NO ES XML ni PDF. Eliminando archivo "+attachment.generatedFileName)
+    console.info("NO ES XML ni PDF. Eliminando archivo "+attachment.generatedFileName)
   	fs.unlink('../logic/attachments/'+attachment.generatedFileName, function (err) {
 	  if (err) {
 	    console.log("XXXXX OCURRIO UN ERROR INESPERADO AL ELIMINAR EL ARCHIVO XXXXX");

@@ -17,7 +17,7 @@ var transporter = nodemailer.createTransport(mailcfg.transporterConfig);
 
 var url = 'https://consultaqr.facturaelectronica.sat.gob.mx/ConsultaCFDIService.svc?singleWsdl';
 
-watch('../logic/new/', {recursive: false},function(filename) {
+watch(rutaNew, {recursive: false},function(filename) {
 	console.log(filename, ' changed.');
 	try{
 		var contents = fs.readFileSync(filename).toString();
@@ -60,7 +60,7 @@ watch('../logic/new/', {recursive: false},function(filename) {
 					console.log(filename)
 					var nuevoNombre = re+"-"+serie+folio;
 					if(result.ConsultaResult.Estado == 'Vigente'){
-						fs.copy(filename, "../logic/valid/"+nuevoNombre+".xml", { replace: true },function (err) {
+						fs.copy(filename, rutaValid+nuevoNombre+".xml", { replace: true },function (err) {
 							if (err) {
 								throw err;
 							}
@@ -77,11 +77,11 @@ watch('../logic/new/', {recursive: false},function(filename) {
 							if (err) {
 								throw err;
 							}
-							console.log("Created "+"../logic/valid/"+re+"-"+serie+folio+".txt"+" to valid");
+							console.log("Created "+rutaValid+re+"-"+serie+folio+".txt"+" to valid");
 						})
 						
-						if(fs.existsSync(filename.replace('../logic/new/','../logic/pdf/').replace(".xml",".pdf")))
-							fs.renameSync(filename.replace('../logic/new/','../logic/pdf/').replace(".xml",".pdf"), "../logic/pdf/"+nuevoNombre+".pdf")
+						if(fs.existsSync(filename.replace(rutaNew,'../logic/pdf/').replace(".xml",".pdf")))
+							fs.renameSync(filename.replace(rutaNew,'../logic/pdf/').replace(".xml",".pdf"), "../logic/pdf/"+nuevoNombre+".pdf")
 					}else if(result.ConsultaResult.CodigoEstatus.search(/601/) > -1){
 						console.log("ERROR 601")
 						fs.copy(filename, "../logic/error/"+nuevoNombre+".xml", { replace: true },function (err) {
@@ -91,14 +91,14 @@ watch('../logic/new/', {recursive: false},function(filename) {
 							console.log("Moved "+filename+" to error");
 							fs.rmrfSync(filename);
 						});
-						if(!fs.existsSync("../logic/error/"+nuevoNombre+".txt")){
+						if(!fs.existsSync(rutaError+nuevoNombre+".txt")){
 							result.fechaError = new Date();
 							result.status = -1;
-							fs.writeFile("../logic/error/"+nuevoNombre+".txt", JSON.stringify(result), function(err){
+							fs.writeFile(rutaError+nuevoNombre+".txt", JSON.stringify(result), function(err){
 								if (err) {
 									throw err;
 								}
-								console.log("Created "+"../logic/error/"+nuevoNombre+".txt"+" to valid");
+								console.log("Created "+rutaError+nuevoNombre+".txt"+" to valid");
 							})
 						}
 					}else if(result.ConsultaResult.CodigoEstatus.search(/602/) > -1){
@@ -107,14 +107,14 @@ watch('../logic/new/', {recursive: false},function(filename) {
 							if (err) return console.error(err) 
 								console.log("MOVED"+fileXML+" TO "+rutaValid)
 						})
-						if(!fs.existsSync("../logic/error/"+nuevoNombre+".txt")){
+						if(!fs.existsSync(rutaError+nuevoNombre+".txt")){
 							result.fechaError = new Date();
 							result.status = -2;
-							fs.writeFile("../logic/error/"+nuevoNombre+".txt", JSON.stringify(result), function(err){
+							fs.writeFile(rutaError+nuevoNombre+".txt", JSON.stringify(result), function(err){
 								if (err) {
 									throw err;
 								}
-								console.log("Created "+"../logic/error/"+nuevoNombre+".txt"+" to valid");
+								console.log("Created "+rutaError+nuevoNombre+".txt"+" to valid");
 							})
 						}
 					}
