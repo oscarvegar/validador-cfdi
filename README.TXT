@@ -5,14 +5,14 @@ validador de CFDI con escucha email.
 **INTERPRETE DE JAVASCRIPT [NODE](http://nodejs.org) v0.10.38 o superior**
 
 **FOREVER**
-```sh
+
 # 1. Instalar forever
 $ npm install forever
-```
+
 
 ## Instalación	&nbsp;
 **Una vez instalado [node](http://nodejs.org):**
-```sh
+
 # 1. Instalar dependencias
 $ npm install
 
@@ -37,4 +37,4 @@ $ forever logs mailListener
 $ forever logs satClient
 $ forever logs mfiles-connector
 
-```
+
