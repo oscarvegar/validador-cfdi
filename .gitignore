@@ -1,3 +1,2 @@
+node_modules/
 
-/node_modules/
-!/node_modules/mail-listener2/index.js
