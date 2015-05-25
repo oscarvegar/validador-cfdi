@@ -1,11 +1,7 @@
 exports.mailConfig = {
-  //username: "factest@grupointecsa.com.mx",
-  //password: "MFiles2015",
-  //host: "mail.grupointecsa.com.mx",
-
-  username: "facturacion@atomicware.mx",
-  password: "f4ctur4c10n",
-  host: "imap.zoho.com",
+  username: "factest@grupointecsa.com.mx",
+  password: "MFiles2015",
+  host: "mail.grupointecsa.com.mx",
   port: 993, // imap port 
   tls: true,
   tlsOptions: { rejectUnauthorized: false },
@@ -19,17 +15,13 @@ exports.mailConfig = {
 };
 
 exports.transporterConfig = {
-    //host:"mail.grupointecsa.com.mx",
-    host:"smtp.zoho.com",
-    //port:26,
-    port:465,
+    host:"mail.grupointecsa.com.mx",
+    port:26,
     secure: true,
     ignoreTLS:true,
     auth: {
-        //user: 'ovega@grupointecsa.com.mx',
-        //pass: 'OV$2015'
-        user: 'facturacion@atomicware.mx',
-        pass: 'f4ctur4c10n'
+        user: '"factest@grupointecsa.com.mx"',
+        pass: 'MFiles2015'
     }
 }
 
