@@ -135,7 +135,7 @@ function createObject(serie,rfcEmisor,uuid,folio,xmlFILE,txtFILE,pdfFILE,fileRes
 	        if(datosProveedor.Items.length>0){
 	        	proveedorID = datosProveedor.Items[0].ObjVer.ID;
 				args.data.PropertyValues.push({PropertyDef: mfilesCfg.mfilesConfig.customer,
-		                    TypedValue: { DataType: 9, Lookup: { Item: proveedorID }  }
+		                    TypedValue: { DataType: 10, Lookups: [{ Item: proveedorID }]  }
 		                });
 
 				client.methods.createObject(args,function(data,response){
@@ -208,7 +208,7 @@ function createObject(serie,rfcEmisor,uuid,folio,xmlFILE,txtFILE,pdfFILE,fileRes
 			    		console.info("***** SE CREO NUEVO PROVEEDOR *****",data)
 				    	proveedorID = JSON.parse(data).ObjVer.ID;
 				    	args.data.PropertyValues.push({PropertyDef: mfilesCfg.mfilesConfig.customer,
-		                    TypedValue: { DataType: 9, Lookup: { Item: proveedorID }  }
+		                    TypedValue: { DataType: 10, Lookups: [{ Item: proveedorID }]  }
 		                });
 				    	client.methods.createObject(args,function(data,response){
 				    		if(response.statusCode==200)

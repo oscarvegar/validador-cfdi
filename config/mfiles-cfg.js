@@ -4,7 +4,7 @@ exports.mfilesConfig = {
     /* FECHA DE LA FACTURUA */
     fechaDocto:1002,
     /* PROPIEDAD DE PROVEEDOR */
-  	customer:1212,
+  	customer:1079,
   	/* FOLIO DE LA FACTURA */
   	numeroFactura:1206,
     /* RFC EMISOR */
@@ -20,7 +20,7 @@ exports.mfilesConfig = {
     /*PROPIEDAD CORPORATIVO DE LA CLASE PROVEEDOR*/
     corporativo:1183,
     /*PROPIEDAD NOMBRE DEL PROVEEDOR*/
-    vendorName:1110,
+    vendorName:1223,
     /*CLASE DEL PROVEEDOR*/
     claseProveedor:98,
     /*CALLE DEL PROVEEDOR*/
