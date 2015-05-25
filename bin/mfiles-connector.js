@@ -140,9 +140,9 @@ function createObject(serie,rfcEmisor,uuid,folio,xmlFILE,txtFILE,pdfFILE,fileRes
 
 				client.methods.createObject(args,function(data,response){
 			    		if(response.statusCode==200)
-							console.info("***** SE CREO NUEVA FACTURA MFILES *****",data)
+							console.info("***** SE CREO NUEVA FACTURA MFILES *****",data.toString())
 						else
-							console.error("XXXXX OCURRIO UN ERROR EN LA CREACION DE FACTURA XXXXX",data)
+							console.error("XXXXX OCURRIO UN ERROR EN LA CREACION DE FACTURA XXXXX",data.toString())
 				});
 			}else{
 				var argsProv = {
@@ -205,19 +205,19 @@ function createObject(serie,rfcEmisor,uuid,folio,xmlFILE,txtFILE,pdfFILE,fileRes
 			    }
 			    client.methods.createVendor(argsProv,function(data,response){
 			    	if(response.statusCode==200){
-			    		console.info("***** SE CREO NUEVO PROVEEDOR *****",data)
+			    		console.info("***** SE CREO NUEVO PROVEEDOR *****",data.toString())
 				    	proveedorID = JSON.parse(data).ObjVer.ID;
 				    	args.data.PropertyValues.push({PropertyDef: mfilesCfg.mfilesConfig.customer,
 		                    TypedValue: { DataType: 10, Lookups: [{ Item: proveedorID }]  }
 		                });
 				    	client.methods.createObject(args,function(data,response){
 				    		if(response.statusCode==200)
-								console.info("***** SE CREO NUEVA FACTURA MFILES *****",data)
+								console.info("***** SE CREO NUEVA FACTURA MFILES *****",data.toString())
 							else
-								console.error("XXXXX OCURRIO UN ERROR EN LA CREACION DE FACTURA XXXXX",data)
+								console.error("XXXXX OCURRIO UN ERROR EN LA CREACION DE FACTURA XXXXX",data.toString())
 						});
 			    	}else{
-			    		console.error("XXXXX OCURRIO UN ERROR EN LA CREACION DEL PROVEEDOR XXXXX",data)
+			    		console.error("XXXXX OCURRIO UN ERROR EN LA CREACION DEL PROVEEDOR XXXXX",data.toString())
 			    	}
 			    	
 			    })
