@@ -11,7 +11,7 @@ var mailListener = new MailListener(mailcfg.mailConfig);
 mailListener.start(); 
  
 mailListener.on("server:connected", function(){
-  console.log("imapConnected");
+  console.info("***** ESCUCHANDO CORREOS *****");
 });
  
 mailListener.on("server:disconnected", function(){

@@ -23,7 +23,7 @@ var transporter = nodemailer.createTransport(mailcfg.transporterConfig);
 
 
 var url = 'https://consultaqr.facturaelectronica.sat.gob.mx/ConsultaCFDIService.svc?singleWsdl';
-
+console.info("***** A LA ESPERA DE NUEVOS DOCUMENTOS *****")
 watch(rutaNew, {recursive: false},function(filename) {
 	console.log(filename, ' changed.');
 	try{
