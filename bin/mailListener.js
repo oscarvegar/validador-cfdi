@@ -1,3 +1,4 @@
+
 var MailListener = require("mail-listener2");
 var fs =  require('fs.extra');
 var fse =  require('fs-extra');
@@ -7,10 +8,7 @@ var fse =  require('fs-extra');
 
 var mailListener = new MailListener(mailcfg.mailConfig);
  
-mailListener.start(); // start listening 
- 
-// stop listening 
-//mailListener.stop(); 
+mailListener.start(); 
  
 mailListener.on("server:connected", function(){
   console.log("imapConnected");
@@ -33,7 +31,6 @@ mailListener.on("mail", function(mail, seqno, attributes){
  
 mailListener.on("attachment", function(attachment,mail){
   console.log("> > > > > ATTACHMENT RECEIVED < < < < <",attachment.contentType);
-  //console.log(mail);
   if(attachment.contentType.search(/\/xml/)>-1){
 	 console.log(">>> ES XML. Moviendo archivo a carpeta NEW");
 	 fse.move('../logic/attachments/'+attachment.generatedFileName, '../logic/new/'+attachment.generatedFileName, {clobber:true},function (err) {
@@ -46,12 +43,10 @@ mailListener.on("attachment", function(attachment,mail){
    });
   }else if(attachment.contentType.search(/\/pdf/)>-1){
     var xmlname = null;
-    console.log(">>>>> MAIL",mail)
     for(var i in mail.attachments){
       var att = mail.attachments[i];
       if(att.contentType.search(/\/xml/)>-1){
         xmlname = attachment.generatedFileName;
-        console.log(xmlname)
       }
     }
     if(xmlname == null)return;
@@ -75,4 +70,6 @@ mailListener.on("attachment", function(attachment,mail){
 	});
   }
 });
+
+
  

@@ -7,10 +7,17 @@ var schedule = require('node-schedule');
 var moment = require('moment');
 var nodemailer = require('nodemailer');
 var mailcfg = require("../config/mail-cfg");
+var license = require("../config/license");
 
 var rutaError = "../logic/error/";
 var rutaNew = "../logic/new/";
 var rutaValid = "../logic/valid/";
+
+var crypto = require('crypto'),
+    algorithm = 'aes-256-ctr',
+    password = 'd6F3Efeq';
+
+var Levenshtein = require('levenshtein');
 
 var transporter = nodemailer.createTransport(mailcfg.transporterConfig);
 
@@ -47,6 +54,12 @@ watch(rutaNew, {recursive: false},function(filename) {
 			var tt = result['cfdi:Comprobante']['$']['total'];
 			var uuid = result['cfdi:Comprobante']['cfdi:Complemento'][0]['tfd:TimbreFiscalDigital'][0]['$']['UUID'];
 			var expresionImpresa = "?re="+re+"&rr="+rr+"&tt="+tt+"&id="+uuid;
+			var rfcReceptor = result['cfdi:Comprobante']['cfdi:Receptor'][0]['$']['rfc'];
+			var licencia = validarLicencia(rfcReceptor);
+			if(licencia<0){
+				console.error("X X X X X LICENCIA INVALIDA X X X X X : "+rfcReceptor)
+				return;
+			}
 			console.log("EXPRESION IMPRESA >>>>> "+expresionImpresa);
 			/*var re = result['cfdi:Comprobante']['cfdi:Emisor'];*/
 			var args = {expresionImpresa: expresionImpresa};
@@ -119,11 +132,28 @@ watch(rutaNew, {recursive: false},function(filename) {
 						}
 					}
 				});
-})
-}
-});
+			})
+		}
+	});
 });
 
+function validarLicencia(rfc){
+	var com = license.license.rfcs;
+	for(var i in com){
+
+		if(new Levenshtein( decrypt(com[i]).toLowerCase(), rfc.toLowerCase() ) == 0){
+			return 1;
+		}
+	}
+	return -1;
+}
+
+function decrypt(text){
+  var decipher = crypto.createDecipher(algorithm,password)
+  var dec = decipher.update(text,'hex','utf8')
+  dec += decipher.final('utf8');
+  return dec;
+}
 
 /*LOGICA PARA REINTENTAR EL ENVIO DE LOS DE ERROR*/
 
