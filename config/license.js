@@ -1,8 +1,8 @@
 exports.license = {
 	rfcs : [
-		'1234',
-		'27abe0c071202823607bb755',
-		'7890'
+		'29affdc971212f226310c359',
+		'2dbefdc675202a23607acd5f',
+		'2da0e4c979202a216760cd2caci	'
 	]
 
 }

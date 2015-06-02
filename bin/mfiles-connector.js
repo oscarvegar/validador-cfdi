@@ -1,7 +1,7 @@
 var Client = require('node-rest-client').Client;
 var fs = require('fs');
 var watch = require('node-watch'); 
-var mfilesCfg = require("../config/mfiles-cfg");
+var mfilesCfg = require("../config/mfiles-cfgdes");
 var parseString = require('xml2js').parseString;
 var unirest = require('unirest');
 
@@ -13,8 +13,10 @@ client.registerMethod("createObject",mfilesCfg.mfilesConfig.createObjectURL,"POS
 client.registerMethod("files",mfilesCfg.mfilesConfig.uploadFilesURL,"POST");
 client.registerMethod("createVendor",mfilesCfg.mfilesConfig.createVendorURL+mfilesCfg.mfilesConfig.customerList,"POST");
 
+
 console.log("OBSERVANDO CARPETA logic/valid")
 watch('../logic/valid/', {recursive: false},function(filename) {
+	console.info("* * * INCOMING * * *",filename)
 	if(filename.search(/.xml/)<0)
 		return;
 	if(!fs.existsSync(filename)){
@@ -79,8 +81,10 @@ function createObject(serie,rfcEmisor,uuid,folio,xmlFILE,txtFILE,pdfFILE,fileRes
 		args = {
 	 		headers:{"Content-Type": "application/octet-stream","X-Authentication":auth}
 		};
-		client.get(mfilesCfg.mfilesConfig.queryObject+mfilesCfg.mfilesConfig.customerList+"?q="+rfcEmisor, args, function(datosProveedor, responses){
+		console.info("URL",mfilesCfg.mfilesConfig.queryObject+"?q="+rfcEmisor)
+		client.get(mfilesCfg.mfilesConfig.queryObject+"?q="+rfcEmisor, args, function(datosProveedor, responses){
 			datosProveedor = JSON.parse(datosProveedor);
+			//console.log("DATOS PROVEEDOR",datosProveedor)
 			var proveedorID = null;
 			var filesUP = [{UploadID:xmlFILE.UploadID,Title:singleFilename,Extension:"xml",Size:xmlFILE.Size},
 		            		{UploadID:txtFILE.UploadID,Title:singleFilename,Extension:"txt",Size:txtFILE.Size}];
@@ -109,13 +113,13 @@ function createObject(serie,rfcEmisor,uuid,folio,xmlFILE,txtFILE,pdfFILE,fileRes
 		                    TypedValue: { DataType: 9, Lookup: { Item: mfilesCfg.mfilesConfig.clase } }
 		                },{
 		                    PropertyDef: mfilesCfg.mfilesConfig.numeroFactura,
-		                    TypedValue: { DataType: 2, Value: parseInt(folio) }
+		                    TypedValue: { DataType: 2, Value: folio }
 		                },{
 		                    PropertyDef: mfilesCfg.mfilesConfig.rfc,
 		                    TypedValue: { DataType: 1, Value: rfcEmisor }
 		                },{
 		                    PropertyDef: mfilesCfg.mfilesConfig.serie,
-		                    TypedValue: { DataType: 1, Value: serie }
+		                    TypedValue: { DataType: 1, Value: serie?serie:"NA" }
 		                },{
 		                    PropertyDef: mfilesCfg.mfilesConfig.uid,
 		                    TypedValue: { DataType: 1, Value: uuid }
@@ -132,12 +136,42 @@ function createObject(serie,rfcEmisor,uuid,folio,xmlFILE,txtFILE,pdfFILE,fileRes
 		            Files: filesUP
 	        	}
 	        }
+
+			/*** SE HACE UN QUERY A VER SI EXISTE EL ARCHIVO Y SE BORRA **/
+	        client.get(mfilesCfg.mfilesConfig.queryObject+"?q="+singleFilename, 
+        	{headers:{"Content-Type": "application/octet-stream","X-Authentication":auth}}, 
+        	function(archivosBus, responses){
+        		archivosBus = JSON.parse(archivosBus);
+        		for(var i in archivosBus.Items){
+					console.info("***** BUSQUEDA EXISTENTE *****",archivosBus.Items[i].Title)
+        			client.put(mfilesCfg.mfilesConfig.createVendorURL
+	    				+archivosBus.Items[i].ObjVer.Type
+	    				+"/"
+	    				+archivosBus.Items[i].ObjVer.ID
+	    				+"/deleted",
+    					{headers:{"Content-Type": "application/octet-stream","X-Authentication":auth},data:"true"},
+	    				function(resDelete,responses){
+	    					console.info("***** BORRADO *****",resDelete)
+						}
+					);
+    			}
+    		});
+		
+
 	        if(datosProveedor.Items.length>0){
-	        	proveedorID = datosProveedor.Items[0].ObjVer.ID;
+	        	var objectList;
+	        	for(var i=0;i<datosProveedor.Items.length;i++){
+	        		if(datosProveedor.Items[i].ObjVer.Type == mfilesCfg.mfilesConfig.customerList){
+	        			objectList = datosProveedor.Items[i];
+	        			break;
+	        		}
+	        	}
+	        	proveedorID = objectList.ObjVer.ID;
 				args.data.PropertyValues.push({PropertyDef: mfilesCfg.mfilesConfig.customer,
 		                    TypedValue: { DataType: 10, Lookups: [{ Item: proveedorID }]  }
 		                });
 
+				
 				client.methods.createObject(args,function(data,response){
 			    		if(response.statusCode==200)
 							console.info("***** SE CREO NUEVA FACTURA MFILES *****",data.toString())
@@ -157,10 +191,10 @@ function createObject(serie,rfcEmisor,uuid,folio,xmlFILE,txtFILE,pdfFILE,fileRes
 						        PropertyDef: mfilesCfg.mfilesConfig.rfc,
 						        TypedValue: { DataType: 1, Value:rfcEmisor }
 					    	},
-					    	{
+					    	/*{
 						        PropertyDef: mfilesCfg.mfilesConfig.corporativo,
 						        TypedValue: { DataType: 8, Value:true }
-					    	},
+					    	},*/
 					    	{
 						        PropertyDef: mfilesCfg.mfilesConfig.vendorName,
 						        TypedValue: { DataType: 1, Value:vendorName}
@@ -222,7 +256,6 @@ function createObject(serie,rfcEmisor,uuid,folio,xmlFILE,txtFILE,pdfFILE,fileRes
 			    	
 			    })
 			}
-	        
 	    });
 	});
 }

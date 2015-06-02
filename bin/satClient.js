@@ -34,7 +34,6 @@ watch(rutaNew, {recursive: false},function(filename) {
 	}
 	parseString(contents, function (err, result) {
 		if(err)return console.log("ERROR EN EL PARSEO")
-			/*console.dir(JSON.stringify(result));*/
 		if(result['cfdi:Comprobante'] === undefined){
 			fs.copy(filename, filename.replace(/\/new\//g, "error"), { replace: true },function (err) {
 				if (err) {
@@ -55,13 +54,17 @@ watch(rutaNew, {recursive: false},function(filename) {
 			var uuid = result['cfdi:Comprobante']['cfdi:Complemento'][0]['tfd:TimbreFiscalDigital'][0]['$']['UUID'];
 			var expresionImpresa = "?re="+re+"&rr="+rr+"&tt="+tt+"&id="+uuid;
 			var rfcReceptor = result['cfdi:Comprobante']['cfdi:Receptor'][0]['$']['rfc'];
+			var vendorName = result['cfdi:Comprobante']['cfdi:Emisor'][0]['$']["nombre"];
 			var licencia = validarLicencia(rfcReceptor);
-			if(licencia<0){
-				console.error("X X X X X LICENCIA INVALIDA X X X X X : "+rfcReceptor)
+			if(licencia.code===-1){
+				console.error("X X X X X ERROR RFC SEMEJANTE X X X X X RFC RECIBIDO>>> "+rfcReceptor+" | RFC PROBABLE >>>"+licencia.rfcLic)
+				sendMailSemejante(rfcReceptor,licencia.rfcLic,re,vendorName,folio);
+				return;
+			}else if(licencia.code===-2){
+				console.error("X X X X X ERROR DE LICENCIA X X X X X : "+rfcReceptor)
 				return;
 			}
 			console.log("EXPRESION IMPRESA >>>>> "+expresionImpresa);
-			/*var re = result['cfdi:Comprobante']['cfdi:Emisor'];*/
 			var args = {expresionImpresa: expresionImpresa};
 			soap.createClient(url, function(err, client) {
 				client.Consulta(args, function(err, result) {
@@ -69,9 +72,12 @@ watch(rutaNew, {recursive: false},function(filename) {
 					console.log(result.ConsultaResult.CodigoEstatus);
 					console.log(result.ConsultaResult.Estado);
 					var comando = "";
-					/*filename = filename.replace(/ /g, "_");*/
-					console.log(filename)
+					console.log("serie",serie)
+					console.log("folio",folio)
+					if(!serie)serie="";
+					if(!folio)folio="";
 					var nuevoNombre = re+"-"+serie+folio;
+					console.log("NUEVO NOMBRE",nuevoNombre);
 					if(result.ConsultaResult.Estado == 'Vigente'){
 						fs.copy(filename, rutaValid+nuevoNombre+".xml", { replace: true },function (err) {
 							if (err) {
@@ -140,12 +146,19 @@ watch(rutaNew, {recursive: false},function(filename) {
 function validarLicencia(rfc){
 	var com = license.license.rfcs;
 	for(var i in com){
-
 		if(new Levenshtein( decrypt(com[i]).toLowerCase(), rfc.toLowerCase() ) == 0){
-			return 1;
+			return {code:1};
 		}
 	}
-	return -1;
+	for(var i in com){
+		var dec = decrypt(com[i]);
+		var distance = new Levenshtein(dec.toLowerCase(), rfc.toLowerCase() );
+		if(distance <= 3){
+			return {code:-1,rfcFac:rfc,rfcLic:dec};
+		}
+	}
+	return {code:-2};
+	
 }
 
 function decrypt(text){
@@ -209,4 +222,26 @@ function mueveArchivo(elem){
 			})
 		}
 	};
+}
+
+function sendMailSemejante(rfc,rfcsem,rfcEmisor,vedorName,folio){
+	var options = mailcfg.mailOptions;
+	options.html = "<b>Se ha recibido una factura con RFC receptor inválido.</b>\
+	<br><br>\
+	RFC RECIBIDO : <b>"+rfc+"</b>\
+	<br>RFC PROBABLE :<b> "+rfcsem+"</b>\
+	<br>RFC EMISOR :<b> "+rfcEmisor+"</b>\
+	<br>NOMBRE EMISOR :<b> "+vedorName+"</b>\
+	<br>FOLIO DE FACTURA :<b> "+folio+"</b>\
+	<br><br>\
+	Verifique con el proveedor de dicha factura.";
+	console.info("ENVIANDO CORREO",options.html)
+	transporter.sendMail(mailcfg.mailOptions, function(error, info){
+		if(error){
+			console.log(error);
+		}else{
+			console.log('Message sent: ' + info.response);
+		}
+	});
+
 }

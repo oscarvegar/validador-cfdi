@@ -1,4 +1,3 @@
-
 var MailListener = require("mail-listener2");
 var fs =  require('fs.extra');
 var fse =  require('fs-extra');
