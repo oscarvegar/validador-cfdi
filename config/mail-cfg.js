@@ -1,17 +1,17 @@
 exports.mailConfig = {
-  /*username: "factest@grupointecsa.com.mx",
+  username: "factest@grupointecsa.com.mx",
   password: "MFiles2015",
   host: "mail.grupointecsa.com.mx",
   port: 993, // imap port 
   tls: true,
-  tlsOptions: { rejectUnauthorized: false },*/
+  tlsOptions: { rejectUnauthorized: false },
   
-  username: "facturacion@ipisamexico.com",
+  /*username: "facturacion@ipisamexico.com",
   password: "ipisa$2012#",
   host: "imap.ipisamexico.com",
   port: 143, // imap port 
   ssl: false,
-  tlsOptions: { rejectUnauthorized: true },
+  tlsOptions: { rejectUnauthorized: true },*/
 
   mailbox: "INBOX", // mailbox to monitor 
   searchFilter: ["UNSEEN"], // the search filter being used after an IDLE notification has been retrieved 

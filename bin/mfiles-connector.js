@@ -1,7 +1,7 @@
 var Client = require('node-rest-client').Client;
 var fs = require('fs');
 var watch = require('node-watch'); 
-var mfilesCfg = require("../config/mfiles-cfgdes");
+var mfilesCfg = require("../config/mfiles-cfg");
 var parseString = require('xml2js').parseString;
 var unirest = require('unirest');
 
@@ -26,9 +26,9 @@ watch('../logic/valid/', {recursive: false},function(filename) {
 	  headers:{"Content-Type": "application/json"} 
 	};
 	args.data = mfilesCfg.mfilesConfig.loginInfo;
-
+	console.info("* * * AUTENTICANDO * * *",filename)
 	client.methods.authenticationtokens(args,function(data,response){
-
+		console.info("* * * AUTENTICADO * * *",filename)
 		data = JSON.parse(data);
 		auth = data.Value;
 		var singleFilename = filename.replace("../logic/valid/","").replace(".xml","");
@@ -50,6 +50,7 @@ watch('../logic/valid/', {recursive: false},function(filename) {
   			var domFiscal = result['cfdi:Comprobante']['cfdi:Emisor'][0]['cfdi:DomicilioFiscal'][0]['$'];
   			var rfcReceptor = result['cfdi:Comprobante']['cfdi:Receptor'][0]['$']['rfc'];
 			client.methods.files(args,function(data,response){
+				console.info("* * * SUBIENDO ARCHIVOS * * *",filename)
 				xmlFILE = JSON.parse(data);
 				var existePDF = fs.existsSync("../logic/pdf/"+singleFilename+".pdf");
 				if(existePDF){
@@ -112,8 +113,8 @@ function createObject(serie,rfcEmisor,uuid,folio,xmlFILE,txtFILE,pdfFILE,fileRes
 		                    PropertyDef: 100,
 		                    TypedValue: { DataType: 9, Lookup: { Item: mfilesCfg.mfilesConfig.clase } }
 		                },{
-		                    PropertyDef: mfilesCfg.mfilesConfig.numeroFactura,
-		                    TypedValue: { DataType: 2, Value: folio }
+		                    PropertyDef: mfilesCfg.mfilesConfig.numeroFactura.id,
+		                    TypedValue: { DataType: mfilesCfg.mfilesConfig.numeroFactura.tipo, Value: folio }
 		                },{
 		                    PropertyDef: mfilesCfg.mfilesConfig.rfc,
 		                    TypedValue: { DataType: 1, Value: rfcEmisor }
@@ -144,11 +145,11 @@ function createObject(serie,rfcEmisor,uuid,folio,xmlFILE,txtFILE,pdfFILE,fileRes
         		archivosBus = JSON.parse(archivosBus);
         		for(var i in archivosBus.Items){
 					console.info("***** BUSQUEDA EXISTENTE *****",archivosBus.Items[i].Title)
-        			client.put(mfilesCfg.mfilesConfig.createVendorURL
+        			client.post(mfilesCfg.mfilesConfig.createVendorURL
 	    				+archivosBus.Items[i].ObjVer.Type
 	    				+"/"
 	    				+archivosBus.Items[i].ObjVer.ID
-	    				+"/deleted",
+	    				+"/deleted?_method=PUT",
     					{headers:{"Content-Type": "application/octet-stream","X-Authentication":auth},data:"true"},
 	    				function(resDelete,responses){
 	    					console.info("***** BORRADO *****",resDelete)

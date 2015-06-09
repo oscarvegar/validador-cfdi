@@ -9,7 +9,8 @@ exports.mfilesConfig = {
     /* SERIE DE LA FACTURA */
     serie:1281,
   	/* FOLIO DE LA FACTURA */
-  	numeroFactura:1171,
+  	numeroFactura:{id:1171,tipo:1},
+   
     /* RFC EMISOR */
     rfc:1206,
     /*ID DEL VALUE LIST DE ESTADOS DE SAT*/

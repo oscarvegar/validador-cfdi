@@ -9,6 +9,7 @@ var async = require('async');
 module.exports = MailListener;
 
 function MailListener(options) {
+  console.log("AbRindo liBRERIO A DE IMAP")
   this.markSeen = !! options.markSeen;
   this.mailbox = options.mailbox || "INBOX";
   if ('string' === typeof options.searchFilter) {
