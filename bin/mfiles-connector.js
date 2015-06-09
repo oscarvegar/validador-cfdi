@@ -1,7 +1,7 @@
 var Client = require('node-rest-client').Client;
 var fs = require('fs');
 var watch = require('node-watch'); 
-var mfilesCfg = require("../config/mfiles-cfg");
+var mfilesCfg = require("../config/mfiles-cfgdes");
 var parseString = require('xml2js').parseString;
 var unirest = require('unirest');
 
@@ -31,7 +31,9 @@ watch('../logic/valid/', {recursive: false},function(filename) {
 		console.info("* * * AUTENTICADO * * *",filename)
 		data = JSON.parse(data);
 		auth = data.Value;
-		var singleFilename = filename.replace("..\\logic\\valid\\","").replace(".xml","");
+		var singleFilename = filename.replace("..\\logic\\valid\\","")
+									.replace("../logic/valid/","")
+									.replace(".xml","");
 		console.info("***** SINGLE FILENAME *****",singleFilename );
 		var file = fs.readFileSync(filename,'utf8');
 		var fileRes = fs.readFileSync(filename.replace(".xml",".txt"),'utf8');
@@ -47,7 +49,10 @@ watch('../logic/valid/', {recursive: false},function(filename) {
   			var uuid = result['cfdi:Comprobante']['cfdi:Complemento'][0]['tfd:TimbreFiscalDigital'][0]['$']['UUID'];
   			var folio = result['cfdi:Comprobante']['$']['folio'];
   			var vendorName = result['cfdi:Comprobante']['cfdi:Emisor'][0]['$']["nombre"];
-  			var domFiscal = result['cfdi:Comprobante']['cfdi:Emisor'][0]['cfdi:DomicilioFiscal'][0]['$'];
+  			vendorName = vendorName?vendorName:rfcEmisor;
+  			var domFiscal = {};
+  			if(result['cfdi:Comprobante']['cfdi:Emisor'][0]['cfdi:DomicilioFiscal'])
+  				domFiscal = result['cfdi:Comprobante']['cfdi:Emisor'][0]['cfdi:DomicilioFiscal'][0]['$'];
   			var rfcReceptor = result['cfdi:Comprobante']['cfdi:Receptor'][0]['$']['rfc'];
 			client.methods.files(args,function(data,response){
 				console.info("* * * SUBIENDO ARCHIVOS * * *",filename)
@@ -114,7 +119,7 @@ function createObject(serie,rfcEmisor,uuid,folio,xmlFILE,txtFILE,pdfFILE,fileRes
 		                    TypedValue: { DataType: 9, Lookup: { Item: mfilesCfg.mfilesConfig.clase } }
 		                },{
 		                    PropertyDef: mfilesCfg.mfilesConfig.numeroFactura.id,
-		                    TypedValue: { DataType: mfilesCfg.mfilesConfig.numeroFactura.tipo, Value: folio }
+		                    TypedValue: { DataType: mfilesCfg.mfilesConfig.numeroFactura.tipo, Value: folio?folio:0 }
 		                },{
 		                    PropertyDef: mfilesCfg.mfilesConfig.rfc,
 		                    TypedValue: { DataType: 1, Value: rfcEmisor }
@@ -133,13 +138,14 @@ function createObject(serie,rfcEmisor,uuid,folio,xmlFILE,txtFILE,pdfFILE,fileRes
 		                },{
 		                    PropertyDef: mfilesCfg.mfilesConfig.fechaDocto,
 		                    TypedValue: { DataType: 5, Value: new Date() }
-		                }],
+		                }
+		                ],
 		            Files: filesUP
 	        	}
 	        }
 
 			/*** SE HACE UN QUERY A VER SI EXISTE EL ARCHIVO Y SE BORRA **/
-	        client.get(mfilesCfg.mfilesConfig.queryObject+"?q="+singleFilename, 
+	        client.get(mfilesCfg.mfilesConfig.queryObject+"?q="+singleFilename+"&o=0", 
         	{headers:{"Content-Type": "application/octet-stream","X-Authentication":auth}}, 
         	function(archivosBus, responses){
         		archivosBus = JSON.parse(archivosBus);
@@ -152,7 +158,7 @@ function createObject(serie,rfcEmisor,uuid,folio,xmlFILE,txtFILE,pdfFILE,fileRes
 	    				+"/deleted?_method=PUT",
     					{headers:{"Content-Type": "application/octet-stream","X-Authentication":auth},data:"true"},
 	    				function(resDelete,responses){
-	    					console.info("***** BORRADO *****",resDelete)
+	    					console.info("***** BORRADO *****",JSON.stringify(resDelete))
 						}
 					);
     			}
@@ -174,9 +180,12 @@ function createObject(serie,rfcEmisor,uuid,folio,xmlFILE,txtFILE,pdfFILE,fileRes
 
 				
 				client.methods.createObject(args,function(data,response){
-			    		if(response.statusCode==200)
-							console.info("***** SE CREO NUEVA FACTURA MFILES *****",data.toString())
-						else
+			    		if(response.statusCode==200){
+							console.info("***** SE CREO NUEVA FACTURA MFILES *****\n ***** ELIMINANDO ARCHIVOS *****",data.toString());
+			    			eliminar("../logic/valid/"+singleFilename+".xml"
+				    				,"../logic/pdf/"+singleFilename+".pdf"
+				    				,"../logic/valid/"+singleFilename+".txt");
+			    		}else
 							console.error("XXXXX OCURRIO UN ERROR EN LA CREACION DE FACTURA XXXXX",data.toString())
 				});
 			}else{
@@ -198,7 +207,7 @@ function createObject(serie,rfcEmisor,uuid,folio,xmlFILE,txtFILE,pdfFILE,fileRes
 					    	},*/
 					    	{
 						        PropertyDef: mfilesCfg.mfilesConfig.vendorName,
-						        TypedValue: { DataType: 1, Value:vendorName}
+						        TypedValue: { DataType: 1, Value:vendorName?vendorName:"NA"}
 					    	},
 					    	{
 						        PropertyDef: mfilesCfg.mfilesConfig.calleProveedor,
@@ -246,17 +255,28 @@ function createObject(serie,rfcEmisor,uuid,folio,xmlFILE,txtFILE,pdfFILE,fileRes
 		                    TypedValue: { DataType: 10, Lookups: [{ Item: proveedorID }]  }
 		                });
 				    	client.methods.createObject(args,function(data,response){
-				    		if(response.statusCode==200)
+				    		if(response.statusCode==200){
 								console.info("***** SE CREO NUEVA FACTURA MFILES *****",data.toString())
-							else
+				    			console.info("***** ELIMINANDO ARCHIVOS *****");
+				    			eliminar("../logic/valid/"+singleFilename+".xml"
+				    				,"../logic/pdf/"+singleFilename+".pdf"
+				    				,"../logic/valid/"+singleFilename+".txt");
+				    			
+				    		}else
 								console.error("XXXXX OCURRIO UN ERROR EN LA CREACION DE FACTURA XXXXX",data.toString())
 						});
 			    	}else{
 			    		console.error("XXXXX OCURRIO UN ERROR EN LA CREACION DEL PROVEEDOR XXXXX",data.toString())
 			    	}
-			    	
 			    })
 			}
 	    });
 	});
+}
+
+function eliminar(){
+	 for (var i = 0; i < arguments.length; i++){
+	 	console.info("***** ELIMINANDO:",arguments[i]);
+		fs.unlink(arguments[i], function(args){})
+	}
 }

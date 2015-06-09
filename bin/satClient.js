@@ -55,6 +55,7 @@ watch(rutaNew, {recursive: false},function(filename) {
 			var expresionImpresa = "?re="+re+"&rr="+rr+"&tt="+tt+"&id="+uuid;
 			var rfcReceptor = result['cfdi:Comprobante']['cfdi:Receptor'][0]['$']['rfc'];
 			var vendorName = result['cfdi:Comprobante']['cfdi:Emisor'][0]['$']["nombre"];
+			var defaultName = result['cfdi:Comprobante']['cfdi:Complemento'][0]['registrofiscal:CFDIRegistroFiscal'][0]['$']["Folio"];
 			var licencia = validarLicencia(rfcReceptor);
 			if(licencia.code===-1){
 				console.error("X X X X X ERROR RFC SEMEJANTE X X X X X RFC RECIBIDO>>> "+rfcReceptor+" | RFC PROBABLE >>>"+licencia.rfcLic)
@@ -75,7 +76,7 @@ watch(rutaNew, {recursive: false},function(filename) {
 					console.log("serie",serie)
 					console.log("folio",folio)
 					if(!serie)serie="";
-					if(!folio)folio="";
+					if(!folio)folio=defaultName;
 					var nuevoNombre = re+"-"+serie+folio;
 					console.log("NUEVO NOMBRE",nuevoNombre);
 					if(result.ConsultaResult.Estado == 'Vigente'){
