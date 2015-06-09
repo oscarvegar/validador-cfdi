@@ -31,8 +31,8 @@ watch('../logic/valid/', {recursive: false},function(filename) {
 		console.info("* * * AUTENTICADO * * *",filename)
 		data = JSON.parse(data);
 		auth = data.Value;
-		var singleFilename = filename.replace("../logic/valid/","").replace(".xml","");
-
+		var singleFilename = filename.replace("..\\logic\\valid\\","").replace(".xml","");
+		console.info("***** SINGLE FILENAME *****",singleFilename );
 		var file = fs.readFileSync(filename,'utf8');
 		var fileRes = fs.readFileSync(filename.replace(".xml",".txt"),'utf8');
 
@@ -82,8 +82,8 @@ function createObject(serie,rfcEmisor,uuid,folio,xmlFILE,txtFILE,pdfFILE,fileRes
 		args = {
 	 		headers:{"Content-Type": "application/octet-stream","X-Authentication":auth}
 		};
-		console.info("URL",mfilesCfg.mfilesConfig.queryObject+"?q="+rfcEmisor)
-		client.get(mfilesCfg.mfilesConfig.queryObject+"?q="+rfcEmisor, args, function(datosProveedor, responses){
+		console.info("URL",mfilesCfg.mfilesConfig.queryObject+"?q="+rfcEmisor+"&o="+mfilesCfg.mfilesConfig.customerList+"&d=false")
+		client.get(mfilesCfg.mfilesConfig.queryObject+"?q="+rfcEmisor+"&o="+mfilesCfg.mfilesConfig.customerList+"&d=false", args, function(datosProveedor, responses){
 			datosProveedor = JSON.parse(datosProveedor);
 			//console.log("DATOS PROVEEDOR",datosProveedor)
 			var proveedorID = null;

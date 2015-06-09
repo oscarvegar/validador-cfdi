@@ -99,8 +99,10 @@ watch(rutaNew, {recursive: false},function(filename) {
 							console.log("Created "+rutaValid+re+"-"+serie+folio+".txt"+" to valid");
 						})
 						
-						if(fs.existsSync(filename.replace(rutaNew,'../logic/pdf/').replace(".xml",".pdf")))
-							fs.renameSync(filename.replace(rutaNew,'../logic/pdf/').replace(".xml",".pdf"), "../logic/pdf/"+nuevoNombre+".pdf")
+						if(fs.existsSync(filename.replace('new','pdf').replace(".xml",".pdf"))){
+							console.info("***** RENOMBRANDO PDF *****")
+							fs.renameSync(filename.replace('new','pdf').replace(".xml",".pdf"), "../logic/pdf/"+nuevoNombre+".pdf")
+						}
 					}else if(result.ConsultaResult.CodigoEstatus.search(/601/) > -1){
 						console.log("ERROR 601")
 						fs.copy(filename, "../logic/error/"+nuevoNombre+".xml", { replace: true },function (err) {
