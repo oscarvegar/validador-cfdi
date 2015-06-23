@@ -87,189 +87,197 @@ function createObject(serie,rfcEmisor,uuid,folio,xmlFILE,txtFILE,pdfFILE,fileRes
 		args = {
 	 		headers:{"Content-Type": "application/octet-stream","X-Authentication":auth}
 		};
-		console.info("URL",mfilesCfg.mfilesConfig.queryObject+"?q="+rfcEmisor+"&o="+mfilesCfg.mfilesConfig.customerList+"&d=false")
-		client.get(mfilesCfg.mfilesConfig.queryObject+"?q="+rfcEmisor+"&o="+mfilesCfg.mfilesConfig.customerList+"&d=false", args, function(datosProveedor, responses){
-			datosProveedor = JSON.parse(datosProveedor);
-			//console.log("DATOS PROVEEDOR",datosProveedor)
-			var proveedorID = null;
-			var filesUP = [{UploadID:xmlFILE.UploadID,Title:singleFilename,Extension:"xml",Size:xmlFILE.Size},
-		            		{UploadID:txtFILE.UploadID,Title:singleFilename,Extension:"txt",Size:txtFILE.Size}];
-	        if(pdfFILE!=null){
-	        	filesUP.push({UploadID:pdfFILE.UploadID,Title:singleFilename,Extension:"pdf",Size:pdfFILE.Size});
-	        }
-	        var respuestaWS = 0;
-	        if(fileObject.status === 0)
-	        	respuestaWS = mfilesCfg.mfilesConfig.estadoSat.OK 
-	        else if(fileObject.status === -1)
-	        	respuestaWS = mfilesCfg.mfilesConfig.estadoSat.INVALIDO 
-	        else if(fileObject.status === -2)
-	        	respuestaWS = mfilesCfg.mfilesConfig.estadoSat.NOENCONTRADO 
-	        console.info("singleFilename",singleFilename)
-	        args = {
-		 		headers:{"Content-Type": "application/json","X-Authentication":auth},
-		 		data:{
-		            PropertyValues: [{
-		                    PropertyDef: 0,
-		                    TypedValue: { DataType: 1, Value: singleFilename }
-		                }, {
-		                    PropertyDef: 22,
-		                    TypedValue: { DataType: 8, Value: false }
-		                }, {
-		                    PropertyDef: 100,
-		                    TypedValue: { DataType: 9, Lookup: { Item: mfilesCfg.mfilesConfig.clase } }
-		                },{
-		                    PropertyDef: mfilesCfg.mfilesConfig.numeroFactura.id,
-		                    TypedValue: { DataType: mfilesCfg.mfilesConfig.numeroFactura.tipo, Value: folio?folio:0 }
-		                },{
-		                    PropertyDef: mfilesCfg.mfilesConfig.rfc,
-		                    TypedValue: { DataType: 1, Value: rfcEmisor }
-		                },{
-		                    PropertyDef: mfilesCfg.mfilesConfig.serie,
-		                    TypedValue: { DataType: 1, Value: serie?serie:"NA" }
-		                },{
-		                    PropertyDef: mfilesCfg.mfilesConfig.uid,
-		                    TypedValue: { DataType: 1, Value: uuid }
-		                },{
-		                    PropertyDef: mfilesCfg.mfilesConfig.estadoSatPD,
-		                    TypedValue: { DataType: 9, Lookup: { Item: respuestaWS }}
-		                },{
-		                    PropertyDef: mfilesCfg.mfilesConfig.rfcReceptor,
-		                    TypedValue: { DataType: 1, Value: rfcReceptor }
-		                },{
-		                    PropertyDef: mfilesCfg.mfilesConfig.fechaDocto,
-		                    TypedValue: { DataType: 5, Value: new Date() }
-		                }
-		                ],
-		            Files: filesUP
-	        	}
-	        }
-
-			/*** SE HACE UN QUERY A VER SI EXISTE EL ARCHIVO Y SE BORRA **/
-	        client.get(mfilesCfg.mfilesConfig.queryObject+"?q="+singleFilename+"&o=0", 
-        	{headers:{"Content-Type": "application/octet-stream","X-Authentication":auth}}, 
-        	function(archivosBus, responses){
-        		archivosBus = JSON.parse(archivosBus);
-        		for(var i in archivosBus.Items){
-					console.info("***** BUSQUEDA EXISTENTE *****",archivosBus.Items[i].Title)
-        			client.post(mfilesCfg.mfilesConfig.createVendorURL
-	    				+archivosBus.Items[i].ObjVer.Type
-	    				+"/"
-	    				+archivosBus.Items[i].ObjVer.ID
-	    				+"/deleted?_method=PUT",
-    					{headers:{"Content-Type": "application/octet-stream","X-Authentication":auth},data:"true"},
-	    				function(resDelete,responses){
-	    					console.info("***** BORRADO *****",JSON.stringify(resDelete))
-						}
-					);
-    			}
-    		});
-		
-
-	        if(datosProveedor.Items.length>0){
-	        	var objectList;
-	        	for(var i=0;i<datosProveedor.Items.length;i++){
-	        		if(datosProveedor.Items[i].ObjVer.Type == mfilesCfg.mfilesConfig.customerList){
-	        			objectList = datosProveedor.Items[i];
-	        			break;
-	        		}
-	        	}
-	        	proveedorID = objectList.ObjVer.ID;
-				args.data.PropertyValues.push({PropertyDef: mfilesCfg.mfilesConfig.customer,
-		                    TypedValue: { DataType: 10, Lookups: [{ Item: proveedorID }]  }
-		                });
-
-				
-				client.methods.createObject(args,function(data,response){
-			    		if(response.statusCode==200){
-							console.info("***** SE CREO NUEVA FACTURA MFILES *****\n ***** ELIMINANDO ARCHIVOS *****",data.toString());
-			    			eliminar("../logic/valid/"+singleFilename+".xml"
-				    				,"../logic/pdf/"+singleFilename+".pdf"
-				    				,"../logic/valid/"+singleFilename+".txt");
-			    		}else
-							console.error("XXXXX OCURRIO UN ERROR EN LA CREACION DE FACTURA XXXXX",data.toString())
-				});
-			}else{
-				var argsProv = {
-					headers:{"Content-Type": "application/json","X-Authentication":auth},
-					data:{
-					    PropertyValues: [
-					    	{
+		var vendorNameSearch = vendorName.replace("."," ").replace(","," ").replace("-"," ")
+		console.info("BUSCANDO POR RFC",mfilesCfg.mfilesConfig.queryObject+"?q*="+rfcEmisor+"&o="+mfilesCfg.mfilesConfig.customerList+"&d=false")
+		client.get(mfilesCfg.mfilesConfig.queryObject+"?q*="+rfcEmisor+"&o="+mfilesCfg.mfilesConfig.customerList+"&d=false", args, function(datosProveedor, responses){
+			console.info("BUSCANDO POR NOMBRE",mfilesCfg.mfilesConfig.queryObject+"?q*="+rfcEmisor+"&o="+mfilesCfg.mfilesConfig.customerList+"&d=false")
+			client.get(mfilesCfg.mfilesConfig.queryObject+"?q*="+vendorNameSearch+"&o="+mfilesCfg.mfilesConfig.customerList+"&d=false", args, function(datosProveedorByNombre, responses){
+				datosProveedorByNombre = JSON.parse(datosProveedorByNombre);
+				datosProveedor = JSON.parse(datosProveedor);
+				//console.log("DATOS PROVEEDOR",datosProveedor)
+				var proveedorID = null;
+				var filesUP = [{UploadID:xmlFILE.UploadID,Title:singleFilename,Extension:"xml",Size:xmlFILE.Size},
+			            		{UploadID:txtFILE.UploadID,Title:singleFilename,Extension:"txt",Size:txtFILE.Size}];
+		        if(pdfFILE!=null){
+		        	filesUP.push({UploadID:pdfFILE.UploadID,Title:singleFilename,Extension:"pdf",Size:pdfFILE.Size});
+		        }
+		        var respuestaWS = 0;
+		        if(fileObject.status === 0)
+		        	respuestaWS = mfilesCfg.mfilesConfig.estadoSat.OK 
+		        else if(fileObject.status === -1)
+		        	respuestaWS = mfilesCfg.mfilesConfig.estadoSat.INVALIDO 
+		        else if(fileObject.status === -2)
+		        	respuestaWS = mfilesCfg.mfilesConfig.estadoSat.NOENCONTRADO 
+		        console.info("singleFilename",singleFilename)
+		        args = {
+			 		headers:{"Content-Type": "application/json","X-Authentication":auth},
+			 		data:{
+			            PropertyValues: [{
+			                    PropertyDef: 0,
+			                    TypedValue: { DataType: 1, Value: singleFilename }
+			                }, {
+			                    PropertyDef: 22,
+			                    TypedValue: { DataType: 8, Value: false }
+			                }, {
 			                    PropertyDef: 100,
-			                    TypedValue: { DataType: 9, Lookup: { Item: mfilesCfg.mfilesConfig.claseProveedor } }
-			                },
-					    	{
-						        PropertyDef: mfilesCfg.mfilesConfig.rfc,
-						        TypedValue: { DataType: 1, Value:rfcEmisor }
-					    	},
-					    	/*{
-						        PropertyDef: mfilesCfg.mfilesConfig.corporativo,
-						        TypedValue: { DataType: 8, Value:true }
-					    	},*/
-					    	{
-						        PropertyDef: mfilesCfg.mfilesConfig.vendorName,
-						        TypedValue: { DataType: 1, Value:vendorName?vendorName:"NA"}
-					    	},
-					    	{
-						        PropertyDef: mfilesCfg.mfilesConfig.calleProveedor,
-						        TypedValue: { DataType: 1, Value:domFiscal.calle?domFiscal.calle:"NA"}
-					    	},
-					    	{
-						        PropertyDef: mfilesCfg.mfilesConfig.noExteriorProveedor,
-						        TypedValue: { DataType: 1, Value:domFiscal.noExterior?domFiscal.noExterior:"NA"}
-					    	},
-					    	{
-						        PropertyDef: mfilesCfg.mfilesConfig.noInteriorProveedor,
-						        TypedValue: { DataType: 1, Value:domFiscal.noInterior?domFiscal.noInterior:"NA"}
-					    	},
-					    	{
-						        PropertyDef: mfilesCfg.mfilesConfig.coloniaProveedor,
-						        TypedValue: { DataType: 1, Value:domFiscal.colonia?domFiscal.colonia:"NA"}
-					    	},
-					    	{
-						        PropertyDef: mfilesCfg.mfilesConfig.paisProveedor,
-						        TypedValue: { DataType: 1, Value:domFiscal.pais?domFiscal.pais:"NA"}
-					    	},
-					    	{
-						        PropertyDef: mfilesCfg.mfilesConfig.estadoProveedor,
-						        TypedValue: { DataType: 1, Value:domFiscal.estado?domFiscal.estado:"NA"}
-					    	},
-					    	{
-						        PropertyDef: mfilesCfg.mfilesConfig.ciudadProveedor,
-						        TypedValue: { DataType: 1, Value:domFiscal.municipio?domFiscal.municipio:"NA"}
-					    	},
-					    	{
-						        PropertyDef: mfilesCfg.mfilesConfig.localidadProveedor,
-						        TypedValue: { DataType: 1, Value:domFiscal.localidad?domFiscal.localidad:"NA"}
-					    	},
-					    	{
-						        PropertyDef: mfilesCfg.mfilesConfig.codigoPostalProveedor,
-						        TypedValue: { DataType: 1, Value:domFiscal.codigoPostal?domFiscal.codigoPostal:"NA"}
-					    	}]
-			    	}
-			    }
-			    client.methods.createVendor(argsProv,function(data,response){
-			    	if(response.statusCode==200){
-			    		console.info("***** SE CREO NUEVO PROVEEDOR *****",data.toString())
-				    	proveedorID = JSON.parse(data).ObjVer.ID;
-				    	args.data.PropertyValues.push({PropertyDef: mfilesCfg.mfilesConfig.customer,
-		                    TypedValue: { DataType: 10, Lookups: [{ Item: proveedorID }]  }
-		                });
-				    	client.methods.createObject(args,function(data,response){
+			                    TypedValue: { DataType: 9, Lookup: { Item: mfilesCfg.mfilesConfig.clase } }
+			                },{
+			                    PropertyDef: mfilesCfg.mfilesConfig.numeroFactura.id,
+			                    TypedValue: { DataType: mfilesCfg.mfilesConfig.numeroFactura.tipo, Value: folio?folio:0 }
+			                },{
+			                    PropertyDef: mfilesCfg.mfilesConfig.rfc,
+			                    TypedValue: { DataType: 1, Value: rfcEmisor }
+			                },{
+			                    PropertyDef: mfilesCfg.mfilesConfig.serie,
+			                    TypedValue: { DataType: 1, Value: serie?serie:"NA" }
+			                },{
+			                    PropertyDef: mfilesCfg.mfilesConfig.uid,
+			                    TypedValue: { DataType: 1, Value: uuid }
+			                },{
+			                    PropertyDef: mfilesCfg.mfilesConfig.estadoSatPD,
+			                    TypedValue: { DataType: 9, Lookup: { Item: respuestaWS }}
+			                },{
+			                    PropertyDef: mfilesCfg.mfilesConfig.rfcReceptor,
+			                    TypedValue: { DataType: 1, Value: rfcReceptor }
+			                },{
+			                    PropertyDef: mfilesCfg.mfilesConfig.fechaDocto,
+			                    TypedValue: { DataType: 5, Value: new Date() }
+			                }
+			                ],
+			            Files: filesUP
+		        	}
+		        }
+
+				/*** SE HACE UN QUERY A VER SI EXISTE EL ARCHIVO Y SE BORRA **/
+		        client.get(mfilesCfg.mfilesConfig.queryObject+"?q="+singleFilename+"&o=0", 
+	        	{headers:{"Content-Type": "application/octet-stream","X-Authentication":auth}}, 
+	        	function(archivosBus, responses){
+	        		archivosBus = JSON.parse(archivosBus);
+	        		for(var i in archivosBus.Items){
+						console.info("***** BUSQUEDA EXISTENTE *****",archivosBus.Items[i].Title)
+	        			client.post(mfilesCfg.mfilesConfig.createVendorURL
+		    				+archivosBus.Items[i].ObjVer.Type
+		    				+"/"
+		    				+archivosBus.Items[i].ObjVer.ID
+		    				+"/deleted?_method=PUT",
+	    					{headers:{"Content-Type": "application/octet-stream","X-Authentication":auth},data:"true"},
+		    				function(resDelete,responses){
+		    					console.info("***** BORRADO *****",JSON.stringify(resDelete))
+							}
+						);
+	    			}
+	    		});
+			
+
+		        if(datosProveedor.Items.length>0 || datosProveedorByNombre.Items.length>0){
+		        	if(datosProveedor.Items.length==0)
+		        		datosProveedor = datosProveedorByNombre;
+		        	var objectList;
+		        	for(var i=0;i<datosProveedor.Items.length;i++){
+		        		if(datosProveedor.Items[i].ObjVer.Type == mfilesCfg.mfilesConfig.customerList){
+		        			objectList = datosProveedor.Items[i];
+		        			break;
+		        		}
+		        	}
+		        	proveedorID = objectList.ObjVer.ID;
+					args.data.PropertyValues.push({PropertyDef: mfilesCfg.mfilesConfig.customer,
+			                    TypedValue: { DataType: 10, Lookups: [{ Item: proveedorID }]  }
+			                });
+
+					
+					client.methods.createObject(args,function(data,response){
 				    		if(response.statusCode==200){
-								console.info("***** SE CREO NUEVA FACTURA MFILES *****",data.toString())
-				    			console.info("***** ELIMINANDO ARCHIVOS *****");
+								console.info("***** SE CREO NUEVA FACTURA MFILES *****\n ***** ELIMINANDO ARCHIVOS *****",data.toString());
 				    			eliminar("../logic/valid/"+singleFilename+".xml"
-				    				,"../logic/pdf/"+singleFilename+".pdf"
-				    				,"../logic/valid/"+singleFilename+".txt");
-				    			
+					    				,"../logic/pdf/"+singleFilename+".pdf"
+					    				,"../logic/valid/"+singleFilename+".txt");
 				    		}else
 								console.error("XXXXX OCURRIO UN ERROR EN LA CREACION DE FACTURA XXXXX",data.toString())
-						});
-			    	}else{
-			    		console.error("XXXXX OCURRIO UN ERROR EN LA CREACION DEL PROVEEDOR XXXXX",data.toString())
-			    	}
-			    })
-			}
+					});
+				}else{
+					var argsProv = {
+						headers:{"Content-Type": "application/json","X-Authentication":auth},
+						data:{
+						    PropertyValues: [
+						    	{
+				                    PropertyDef: 100,
+				                    TypedValue: { DataType: 9, Lookup: { Item: mfilesCfg.mfilesConfig.claseProveedor } }
+				                },
+						    	{
+							        PropertyDef: mfilesCfg.mfilesConfig.rfc,
+							        TypedValue: { DataType: 1, Value:rfcEmisor }
+						    	},
+						    	/*{
+							        PropertyDef: mfilesCfg.mfilesConfig.corporativo,
+							        TypedValue: { DataType: 8, Value:true }
+						    	},*/
+						    	{
+							        PropertyDef: mfilesCfg.mfilesConfig.vendorName,
+							        TypedValue: { DataType: 1, Value:vendorName?vendorName:"NA"}
+						    	},
+						    	{
+							        PropertyDef: mfilesCfg.mfilesConfig.calleProveedor,
+							        TypedValue: { DataType: 1, Value:domFiscal.calle?domFiscal.calle:"NA"}
+						    	},
+						    	{
+							        PropertyDef: mfilesCfg.mfilesConfig.noExteriorProveedor,
+							        TypedValue: { DataType: 1, Value:domFiscal.noExterior?domFiscal.noExterior:"NA"}
+						    	},
+						    	{
+							        PropertyDef: mfilesCfg.mfilesConfig.noInteriorProveedor,
+							        TypedValue: { DataType: 1, Value:domFiscal.noInterior?domFiscal.noInterior:"NA"}
+						    	},
+						    	{
+							        PropertyDef: mfilesCfg.mfilesConfig.coloniaProveedor,
+							        TypedValue: { DataType: 1, Value:domFiscal.colonia?domFiscal.colonia:"NA"}
+						    	},
+						    	{
+							        PropertyDef: mfilesCfg.mfilesConfig.paisProveedor,
+							        TypedValue: { DataType: 1, Value:domFiscal.pais?domFiscal.pais:"NA"}
+						    	},
+						    	{
+							        PropertyDef: mfilesCfg.mfilesConfig.estadoProveedor,
+							        TypedValue: { DataType: 1, Value:domFiscal.estado?domFiscal.estado:"NA"}
+						    	},
+						    	{
+							        PropertyDef: mfilesCfg.mfilesConfig.ciudadProveedor,
+							        TypedValue: { DataType: 1, Value:domFiscal.municipio?domFiscal.municipio:"NA"}
+						    	},
+						    	{
+							        PropertyDef: mfilesCfg.mfilesConfig.localidadProveedor,
+							        TypedValue: { DataType: 1, Value:domFiscal.localidad?domFiscal.localidad:"NA"}
+						    	},
+						    	{
+							        PropertyDef: mfilesCfg.mfilesConfig.codigoPostalProveedor,
+							        TypedValue: { DataType: 1, Value:domFiscal.codigoPostal?domFiscal.codigoPostal:"NA"}
+						    	}]
+				    	}
+				    }
+				    client.methods.createVendor(argsProv,function(data,response){
+				    	if(response.statusCode==200){
+				    		console.info("***** SE CREO NUEVO PROVEEDOR *****",data.toString())
+					    	proveedorID = JSON.parse(data).ObjVer.ID;
+					    	args.data.PropertyValues.push({PropertyDef: mfilesCfg.mfilesConfig.customer,
+			                    TypedValue: { DataType: 10, Lookups: [{ Item: proveedorID }]  }
+			                });
+					    	client.methods.createObject(args,function(data,response){
+					    		if(response.statusCode==200){
+									console.info("***** SE CREO NUEVA FACTURA MFILES *****",data.toString())
+					    			console.info("***** ELIMINANDO ARCHIVOS *****");
+					    			eliminar("../logic/valid/"+singleFilename+".xml"
+					    				,"../logic/pdf/"+singleFilename+".pdf"
+					    				,"../logic/valid/"+singleFilename+".txt");
+					    			
+					    		}else
+									console.error("XXXXX OCURRIO UN ERROR EN LA CREACION DE FACTURA XXXXX",data.toString())
+							});
+				    	}else{
+				    		console.error("XXXXX OCURRIO UN ERROR EN LA CREACION DEL PROVEEDOR XXXXX",data.toString())
+				    	}
+				    })
+				}
+			});
+			
 	    });
 	});
 }

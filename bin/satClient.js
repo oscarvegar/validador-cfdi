@@ -228,7 +228,14 @@ function mueveArchivo(elem){
 }
 
 function sendMailSemejante(rfc,rfcsem,rfcEmisor,vedorName,folio){
-	var options = mailcfg.mailOptions;
+	var options;
+	for(var i in mailcfg.mailOptions){
+		if(mailcfg.mailOptions[i].rfc == rfc){
+			options = mailcfg.mailOptions[i].config;
+		}
+	}
+	if(!options)
+		options = mailcfg.mailOptions[0].config;
 	options.html = "<b>Se ha recibido una factura con RFC receptor inválido.</b>\
 	<br><br>\
 	RFC RECIBIDO : <b>"+rfc+"</b>\
