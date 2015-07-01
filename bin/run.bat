@@ -1,0 +1,1 @@
+forever start --uid mail -a mailListener.js & forever start --uid sat -a satClient.js & forever start --uid mfiles -a mfiles-connector.js

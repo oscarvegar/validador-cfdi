@@ -1,8 +1,11 @@
 var MailListener = require("mail-listener2");
 var fs =  require('fs.extra');
 var fse =  require('fs-extra');
+var nodemailer = require('nodemailer');
  
  var mailcfg = require("../config/mail-cfg");
+var transporter = nodemailer.createTransport(mailcfg.transporterConfig);
+
  mailcfg.mailConfig.attachmentOptions =  { directory: "../logic/attachments/" };
 
 var mailListener = new MailListener(mailcfg.mailConfig);
@@ -22,15 +25,19 @@ mailListener.on("error", function(err){
 });
  
 mailListener.on("mail", function(mail, seqno, attributes){
-  //console.log("> > > > > MAIL RECEIVED < < < < <",mail.text);
-  // do something with mail object including attachments 
-  //console.log("emailParsed", mail);
-  // mail processing code goes here 
+  var hasXML = false;
+  console.log("ATTACHT",mail.attachments)
+  for(var i in mail.attachments){
+    if(mail.attachments[i].fileName.search(/.xml/)>-1)
+      hasXML = true;
+  }
+  if(!hasXML)
+    sendMailException(mail);
 });
  
 mailListener.on("attachment", function(attachment,mail){
   console.log("> > > > > ATTACHMENT RECEIVED < < < < <",attachment.contentType);
-  if(attachment.contentType.search(/\/xml/)>-1){
+  if(attachment.generatedFileName.search(/.xml/)>-1){
 	 console.log(">>> ES XML. Moviendo archivo a carpeta NEW");
 	 fse.move('../logic/attachments/'+attachment.generatedFileName, '../logic/new/'+attachment.generatedFileName, {clobber:true},function (err) {
 	  if (err) {
@@ -40,7 +47,7 @@ mailListener.on("attachment", function(attachment,mail){
 	  }
 	  console.log("Moved "+attachment.fileName+" to logic/new/");
    });
-  }else if(attachment.contentType.search(/\/pdf/)>-1){
+  }else if(attachment.generatedFileName.search(/.pdf/)>-1){
     var xmlname = null;
     for(var i in mail.attachments){
       var att = mail.attachments[i];
@@ -69,6 +76,29 @@ mailListener.on("attachment", function(attachment,mail){
 	});
   }
 });
-
-
+ 
+function sendMailException(mail){
+  console.log("MAIL",mail)
+   var  options = mailcfg.mailOptions[0].config;
+  options.html = mail.html;
+  if(mail.attachments){
+    options.attachments = [];
+    for(var i in mail.attachments){
+      options.attachments.push(
+        {
+          filename:mail.attachments[i].fileName,
+          content:mail.attachments[i].content
+        }
+      )
+    }
+  }
+  options.subject = 'FACTURA NO ES XML: '+mail.subject;
+  transporter.sendMail(options, function(error, info){
+    if(error){
+      console.log(error);
+    }else{
+      console.log('Message sent: ' + info.response);
+    }
+  });
+}
  

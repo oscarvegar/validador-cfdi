@@ -1,4 +1,4 @@
-var soap = require('soap');
+﻿var soap = require('soap');
 var fs =  require('fs.extra');
 var fse =  require('fs-extra');
 var watch = require('node-watch');
@@ -55,7 +55,9 @@ watch(rutaNew, {recursive: false},function(filename) {
 			var expresionImpresa = "?re="+re+"&rr="+rr+"&tt="+tt+"&id="+uuid;
 			var rfcReceptor = result['cfdi:Comprobante']['cfdi:Receptor'][0]['$']['rfc'];
 			var vendorName = result['cfdi:Comprobante']['cfdi:Emisor'][0]['$']["nombre"];
-			var defaultName = result['cfdi:Comprobante']['cfdi:Complemento'][0]['registrofiscal:CFDIRegistroFiscal'][0]['$']["Folio"];
+			var defaultName="";
+			if(!folio)
+				var defaultName = result['cfdi:Comprobante']['cfdi:Complemento'][0]['registrofiscal:CFDIRegistroFiscal'][0]['$']["Folio"];
 			var licencia = validarLicencia(rfcReceptor);
 			if(licencia.code===-1){
 				console.error("X X X X X ERROR RFC SEMEJANTE X X X X X RFC RECIBIDO>>> "+rfcReceptor+" | RFC PROBABLE >>>"+licencia.rfcLic)
@@ -246,7 +248,7 @@ function sendMailSemejante(rfc,rfcsem,rfcEmisor,vedorName,folio){
 	<br><br>\
 	Verifique con el proveedor de dicha factura.";
 	console.info("ENVIANDO CORREO",options.html)
-	transporter.sendMail(mailcfg.mailOptions, function(error, info){
+	transporter.sendMail(options, function(error, info){
 		if(error){
 			console.log(error);
 		}else{
