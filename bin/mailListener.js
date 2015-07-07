@@ -26,9 +26,9 @@ mailListener.on("error", function(err){
  
 mailListener.on("mail", function(mail, seqno, attributes){
   var hasXML = false;
-  console.log("ATTACHT",mail.attachments)
+  //console.log("ATTACHT",mail.attachments)
   for(var i in mail.attachments){
-    if(mail.attachments[i].fileName.search(/.xml/)>-1)
+    if(mail.attachments[i].fileName.toLowerCase().search(/.xml/)>-1)
       hasXML = true;
   }
   if(!hasXML)
@@ -37,9 +37,19 @@ mailListener.on("mail", function(mail, seqno, attributes){
  
 mailListener.on("attachment", function(attachment,mail){
   console.log("> > > > > ATTACHMENT RECEIVED < < < < <",attachment.contentType);
-  if(attachment.generatedFileName.search(/.xml/)>-1){
+
+  var xmlqty = 0;
+  var pdfqty = 0;
+
+  for(var i in mail.attachments){
+    var att = mail.attachments[i];
+    if(att.generatedFileName.toLowerCase().search(/.xml/)>-1)xmlqty++;
+    if(att.generatedFileName.toLowerCase().search(/.pdf/)>-1)pdfqty++;
+  }
+
+  if(attachment.generatedFileName.toLowerCase().search(/.xml/)>-1){
 	 console.log(">>> ES XML. Moviendo archivo a carpeta NEW");
-	 fse.move('../logic/attachments/'+attachment.generatedFileName, '../logic/new/'+attachment.generatedFileName, {clobber:true},function (err) {
+	 fse.move('../logic/attachments/'+attachment.generatedFileName, '../logic/new/'+attachment.generatedFileName.toLowerCase(), {clobber:true},function (err) {
 	  if (err) {
 	    console.error("XXXXX OCURRIO UN ERROR INESPERADO AL MOVER EL ARCHIVO XML XXXXX");
 	    console.error(err);
@@ -47,23 +57,29 @@ mailListener.on("attachment", function(attachment,mail){
 	  }
 	  console.log("Moved "+attachment.fileName+" to logic/new/");
    });
-  }else if(attachment.generatedFileName.search(/.pdf/)>-1){
+  }else if(attachment.generatedFileName.toLowerCase().search(/.pdf/)>-1){
     var xmlname = null;
-    for(var i in mail.attachments){
-      var att = mail.attachments[i];
-      if(att.contentType.search(/\/xml/)>-1){
-        xmlname = attachment.generatedFileName;
+    if(xmlqty==1){
+      for(var i in mail.attachments){
+        var att = mail.attachments[i];
+        if(att.generatedFileName.toLowerCase().search(/.xml/)>-1){
+          xmlname = att.generatedFileName;
+        }
       }
+    }else{
+      xmlname = attachment.generatedFileName;
     }
+    console.log("XML NAME ::::: ",xmlname)
     if(xmlname == null)return;
-   console.log(">>> ES PDF. Moviendo archivo a carpeta PFD");
-   fse.move('../logic/attachments/'+attachment.generatedFileName, '../logic/pdf/'+xmlname.replace(".xml",".pdf"), {clobber:true},function (err) {
+    console.log(">>> ES PDF. Moviendo archivo a carpeta PFD");
+    var pdfname = '../logic/pdf/'+xmlname.replace(".xml",".pdf").toLowerCase();
+    fse.move('../logic/attachments/'+attachment.generatedFileName, pdfname, {clobber:true},function (err) {
     if (err) {
       console.log("XXXXX OCURRIO UN ERROR INESPERADO AL MOVER EL ARCHIVO PDF XXXXX");
       console.log(err);
       return;
     }
-    console.log("Moved "+attachment.fileName+" to logic/pdf/");
+    console.log("Moved "+pdfname+" to logic/pdf/");
    });
   }else{
     console.info("NO ES XML ni PDF. Eliminando archivo "+attachment.generatedFileName)

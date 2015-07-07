@@ -28,10 +28,15 @@ watch(rutaNew, {recursive: false},function(filename) {
 	console.log(filename, ' changed.');
 	try{
 		var contents = fs.readFileSync(filename).toString();
+		setTimeout(delay,5000,filename,contents);
 	}catch(err){
 		console.log("FILE NOT HERE")
 		return
 	}
+});
+
+function delay(filename,contents){
+	
 	parseString(contents, function (err, result) {
 		if(err)return console.log("ERROR EN EL PARSEO")
 		if(result['cfdi:Comprobante'] === undefined){
@@ -65,13 +70,34 @@ watch(rutaNew, {recursive: false},function(filename) {
 				return;
 			}else if(licencia.code===-2){
 				console.error("X X X X X ERROR DE LICENCIA X X X X X : "+rfcReceptor)
+				var options = mailcfg.mailOptions[0].config;
+				options.html = "<b>La factura del emisor "+vendorName+" esta no es cubierta por la licencia.<BR><BR>RFC receptor:"+rfcReceptor+"</b>";
+				options.subject = 'LICENCIA INVALIDA ',
+				transporter.sendMail(options, function(error, info){
+					if(error){
+						console.log(error);
+					}else{
+						console.log('Message sent: ' + info.response);
+					}
+				});
 				return;
 			}
 			console.log("EXPRESION IMPRESA >>>>> "+expresionImpresa);
 			var args = {expresionImpresa: expresionImpresa};
 			soap.createClient(url, function(err, client) {
 				client.Consulta(args, function(err, result) {
-					console.log(result.ConsultaResult);
+					if(!result){
+						fs.copy(filename, "../logic/error/"+nuevoNombre+".xml", { replace: true },function (err) {
+							if (err) {
+								throw err;
+							}
+							console.log("***** MOVIENDO "+filename+" A CARPETA DE ERROR *****");
+							fs.rmrfSync(filename);
+
+						});
+						return;
+					}
+					console.log("result.ConsultaResult ::: ",result.ConsultaResult);
 					console.log(result.ConsultaResult.CodigoEstatus);
 					console.log(result.ConsultaResult.Estado);
 					var comando = "";
@@ -81,7 +107,7 @@ watch(rutaNew, {recursive: false},function(filename) {
 					if(!folio)folio=defaultName;
 					var nuevoNombre = re+"-"+serie+folio;
 					console.log("NUEVO NOMBRE",nuevoNombre);
-					if(result.ConsultaResult.Estado == 'Vigente'){
+					if(result.ConsultaResult.CodigoEstatus.search(/satisfactoriamente/) > -1 && result.ConsultaResult.Estado == 'Vigente'){
 						fs.copy(filename, rutaValid+nuevoNombre+".xml", { replace: true },function (err) {
 							if (err) {
 								throw err;
@@ -106,6 +132,24 @@ watch(rutaNew, {recursive: false},function(filename) {
 							console.info("***** RENOMBRANDO PDF *****")
 							fs.renameSync(filename.replace('new','pdf').replace(".xml",".pdf"), "../logic/pdf/"+nuevoNombre+".pdf")
 						}
+					}else if(result.ConsultaResult.CodigoEstatus.search(/satisfactoriamente/) > -1){
+						var options = mailcfg.mailOptions[0].config;
+						for(var i in mailcfg.mailOptions){
+							if(mailcfg.mailOptions[i].rfc == rfcReceptor){
+								options = JSON.parse(JSON.stringify(mailcfg.mailOptions[i].config));
+								options.to = options.to + ","+mailcfg.mailOptions[0].config.to;
+								break;
+							}
+						}
+						options.html = "<b>La factura del emisor "+vendorName+" esta en estado "+result.ConsultaResult.Estado+"</b>";
+						options.subject = 'Factura Estado '+result.ConsultaResult.Estado,
+						transporter.sendMail(options, function(error, info){
+							if(error){
+								console.log(error);
+							}else{
+								console.log('Message sent: ' + info.response);
+							}
+						});
 					}else if(result.ConsultaResult.CodigoEstatus.search(/601/) > -1){
 						console.log("ERROR 601")
 						fs.copy(filename, "../logic/error/"+nuevoNombre+".xml", { replace: true },function (err) {
@@ -126,7 +170,7 @@ watch(rutaNew, {recursive: false},function(filename) {
 							})
 						}
 					}else if(result.ConsultaResult.CodigoEstatus.search(/602/) > -1){
-						console.log("ERROR 601")
+						console.log("ERROR 602")
 						fse.move(filename,rutaError+nuevoNombre+".xml",{clobber:true},function(err){
 							if (err) return console.error(err) 
 								console.log("MOVED"+fileXML+" TO "+rutaValid)
@@ -146,7 +190,8 @@ watch(rutaNew, {recursive: false},function(filename) {
 			})
 		}
 	});
-});
+
+}
 
 function validarLicencia(rfc){
 	var com = license.license.rfcs;
@@ -214,9 +259,10 @@ function mueveArchivo(elem){
 				fse.move(rutaError+fileXML,rutaValid+fileXML,{clobber:true},function(err){
 					if (err) return console.error(err) 
 						console.log("MOVED"+fileXML+" TO "+rutaValid)
-					var options = mailcfg.mailOptions;
+					var options = mailcfg.mailOptions[0].config;
 					options.html = "<b>La factura "+fileXML+" no se pudo validar.</b>"
-					transporter.sendMail(mailcfg.mailOptions, function(error, info){
+					options.subject = 'Factura Invalida',
+					transporter.sendMail(options, function(error, info){
 						if(error){
 							console.log(error);
 						}else{
@@ -247,6 +293,7 @@ function sendMailSemejante(rfc,rfcsem,rfcEmisor,vedorName,folio){
 	<br>FOLIO DE FACTURA :<b> "+folio+"</b>\
 	<br><br>\
 	Verifique con el proveedor de dicha factura.";
+	options.subject = 'Factura Invalida',
 	console.info("ENVIANDO CORREO",options.html)
 	transporter.sendMail(options, function(error, info){
 		if(error){
