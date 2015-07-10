@@ -38,16 +38,13 @@ watch(rutaNew, {recursive: false},function(filename) {
 function delay(filename,contents){
 	
 	parseString(contents, function (err, result) {
-		if(err)return console.log("ERROR EN EL PARSEO")
+		if(err){
+			console.log("ERROR EN EL PARSEO")
+			fs.unlink(filename, console.log())
+			return
+		}
 		if(result['cfdi:Comprobante'] === undefined){
-			fs.copy(filename, filename.replace(/\/new\//g, "error"), { replace: true },function (err) {
-				if (err) {
-					throw err;
-				}
-				console.log("Moved "+filename+" to error");
-				fs.rmrfSync(filename);
-				return
-			});
+			fs.unlink(filename, console.log())
 		}
 		else{
 
@@ -62,11 +59,13 @@ function delay(filename,contents){
 			var vendorName = result['cfdi:Comprobante']['cfdi:Emisor'][0]['$']["nombre"];
 			var defaultName="";
 			if(!folio)
-				var defaultName = result['cfdi:Comprobante']['cfdi:Complemento'][0]['registrofiscal:CFDIRegistroFiscal'][0]['$']["Folio"];
+				var defaultName = uuid+"";
 			var licencia = validarLicencia(rfcReceptor);
 			if(licencia.code===-1){
 				console.error("X X X X X ERROR RFC SEMEJANTE X X X X X RFC RECIBIDO>>> "+rfcReceptor+" | RFC PROBABLE >>>"+licencia.rfcLic)
 				sendMailSemejante(rfcReceptor,licencia.rfcLic,re,vendorName,folio);
+				fs.unlink(filename, console.log())
+				fs.unlink(filename.replace(".xml",".pdf").replace("new","pdf"), console.log())
 				return;
 			}else if(licencia.code===-2){
 				console.error("X X X X X ERROR DE LICENCIA X X X X X : "+rfcReceptor)
@@ -80,6 +79,8 @@ function delay(filename,contents){
 						console.log('Message sent: ' + info.response);
 					}
 				});
+				fs.unlink(filename, console.log())
+				fs.unlink(filename.replace(".xml",".pdf").replace("new","pdf"), console.log())
 				return;
 			}
 			console.log("EXPRESION IMPRESA >>>>> "+expresionImpresa);
@@ -107,10 +108,15 @@ function delay(filename,contents){
 					if(!folio)folio=defaultName;
 					var nuevoNombre = re+"-"+serie+folio;
 					console.log("NUEVO NOMBRE",nuevoNombre);
+					if(fs.existsSync(filename.replace('new','pdf').replace(".xml",".pdf"))){
+						console.info("***** RENOMBRANDO PDF *****")
+						fs.renameSync(filename.replace('new','pdf').replace(".xml",".pdf"), "../logic/pdf/"+nuevoNombre+".pdf")
+					}
 					if(result.ConsultaResult.CodigoEstatus.search(/satisfactoriamente/) > -1 && result.ConsultaResult.Estado == 'Vigente'){
 						fs.copy(filename, rutaValid+nuevoNombre+".xml", { replace: true },function (err) {
 							if (err) {
-								throw err;
+								console.log(err)
+								
 							}
 							console.log("Moved "+filename+" to valid");
 							fs.rmrfSync(filename);
@@ -128,10 +134,7 @@ function delay(filename,contents){
 							console.log("Created "+rutaValid+re+"-"+serie+folio+".txt"+" to valid");
 						})
 						
-						if(fs.existsSync(filename.replace('new','pdf').replace(".xml",".pdf"))){
-							console.info("***** RENOMBRANDO PDF *****")
-							fs.renameSync(filename.replace('new','pdf').replace(".xml",".pdf"), "../logic/pdf/"+nuevoNombre+".pdf")
-						}
+						
 					}else if(result.ConsultaResult.CodigoEstatus.search(/satisfactoriamente/) > -1){
 						var options = mailcfg.mailOptions[0].config;
 						for(var i in mailcfg.mailOptions){
@@ -152,12 +155,12 @@ function delay(filename,contents){
 						});
 					}else if(result.ConsultaResult.CodigoEstatus.search(/601/) > -1){
 						console.log("ERROR 601")
-						fs.copy(filename, "../logic/error/"+nuevoNombre+".xml", { replace: true },function (err) {
+						fse.move(filename, "../logic/error/"+nuevoNombre+".xml", { clobber: true },function (err) {
 							if (err) {
-								throw err;
+								return console.error(err) 
 							}
 							console.log("Moved "+filename+" to error");
-							fs.rmrfSync(filename);
+							//fs.rmrfSync(filename);
 						});
 						if(!fs.existsSync(rutaError+nuevoNombre+".txt")){
 							result.fechaError = new Date();
@@ -166,14 +169,14 @@ function delay(filename,contents){
 								if (err) {
 									throw err;
 								}
-								console.log("Created "+rutaError+nuevoNombre+".txt"+" to valid");
+								console.log("Created "+rutaError+nuevoNombre+".txt"+" TO ERROR");
 							})
 						}
 					}else if(result.ConsultaResult.CodigoEstatus.search(/602/) > -1){
 						console.log("ERROR 602")
 						fse.move(filename,rutaError+nuevoNombre+".xml",{clobber:true},function(err){
 							if (err) return console.error(err) 
-								console.log("MOVED"+fileXML+" TO "+rutaValid)
+								console.log("MOVED"+filename+" TO "+rutaError)
 						})
 						if(!fs.existsSync(rutaError+nuevoNombre+".txt")){
 							result.fechaError = new Date();
@@ -182,7 +185,7 @@ function delay(filename,contents){
 								if (err) {
 									throw err;
 								}
-								console.log("Created "+rutaError+nuevoNombre+".txt"+" to valid");
+								console.log("Created "+rutaError+nuevoNombre+".txt"+" TO ERROR");
 							})
 						}
 					}
@@ -221,7 +224,6 @@ function decrypt(text){
 /*LOGICA PARA REINTENTAR EL ENVIO DE LOS DE ERROR*/
 
 var rule = new schedule.RecurrenceRule();
-rule.minute = 42;
 schedule.scheduleJob('*/5 * * * *', reintentaEnvio); 
 reintentaEnvio();
 
@@ -239,15 +241,21 @@ function endsWith(str, suffix) {
 
 function mueveArchivo(elem){
 	if(endsWith(elem,".txt")){
+
+		console.log("Muerve archivos")
 		var file = elem;
 		var fileXML = file.replace(".txt",".xml");
+		if(fs.existsSync(rutaError+fileXML)==false){
+			fs.unlink(rutaError+file, function(args){})
+			return;
+		}
 		console.log("FILE >>> "+file)
 		var contents = fs.readFileSync(rutaError+file,'UTF-8');
 		var respuestaSat = JSON.parse(contents);
 		var fechaVencimiento = moment(respuestaSat.fechaError).add(3, 'days');
 		var diff = moment().diff(fechaVencimiento);
 		console.log("DIFF >>>>>>"+diff); 
-		if(diff > 0){
+		if(diff < 0){
 			fse.move(rutaError+fileXML,rutaNew+fileXML,{clobber:true},function(err){
 				if (err) return console.error(err) 
 					console.log("MOVED"+fileXML+" TO "+rutaValid)
@@ -257,6 +265,7 @@ function mueveArchivo(elem){
 				if (err) return console.error(err)
 					console.log("MOVED"+file+" TO "+rutaValid)
 				fse.move(rutaError+fileXML,rutaValid+fileXML,{clobber:true},function(err){
+					fs.unlink(file, function(args){})
 					if (err) return console.error(err) 
 						console.log("MOVED"+fileXML+" TO "+rutaValid)
 					var options = mailcfg.mailOptions[0].config;

@@ -37,6 +37,7 @@ mailListener.on("mail", function(mail, seqno, attributes){
  
 mailListener.on("attachment", function(attachment,mail){
   console.log("> > > > > ATTACHMENT RECEIVED < < < < <",attachment.contentType);
+  console.log("> > > > > ATTACHMENT NAME < < < < <",attachment.fileName);
 
   var xmlqty = 0;
   var pdfqty = 0;
@@ -47,9 +48,10 @@ mailListener.on("attachment", function(attachment,mail){
     if(att.generatedFileName.toLowerCase().search(/.pdf/)>-1)pdfqty++;
   }
 
-  if(attachment.generatedFileName.toLowerCase().search(/.xml/)>-1){
+  if(attachment.fileName.toLowerCase().search(/.xml/)>-1){
 	 console.log(">>> ES XML. Moviendo archivo a carpeta NEW");
-	 fse.move('../logic/attachments/'+attachment.generatedFileName, '../logic/new/'+attachment.generatedFileName.toLowerCase(), {clobber:true},function (err) {
+   var xmltemp = attachment.fileName.toUpperCase().replace(".XML",".xml");
+	 fse.move('../logic/attachments/'+attachment.generatedFileName, '../logic/new/'+xmltemp, {clobber:true},function (err) {
 	  if (err) {
 	    console.error("XXXXX OCURRIO UN ERROR INESPERADO AL MOVER EL ARCHIVO XML XXXXX");
 	    console.error(err);
@@ -62,17 +64,17 @@ mailListener.on("attachment", function(attachment,mail){
     if(xmlqty==1){
       for(var i in mail.attachments){
         var att = mail.attachments[i];
-        if(att.generatedFileName.toLowerCase().search(/.xml/)>-1){
-          xmlname = att.generatedFileName;
+        if(att.fileName.toLowerCase().search(/.xml/)>-1){
+          xmlname = att.fileName;
         }
       }
     }else{
-      xmlname = attachment.generatedFileName;
+      xmlname = attachment.fileName;
     }
     console.log("XML NAME ::::: ",xmlname)
     if(xmlname == null)return;
     console.log(">>> ES PDF. Moviendo archivo a carpeta PFD");
-    var pdfname = '../logic/pdf/'+xmlname.replace(".xml",".pdf").toLowerCase();
+    var pdfname = '../logic/pdf/'+xmlname.toUpperCase().replace(".XML",".pdf").replace(".PDF",".pdf");
     fse.move('../logic/attachments/'+attachment.generatedFileName, pdfname, {clobber:true},function (err) {
     if (err) {
       console.log("XXXXX OCURRIO UN ERROR INESPERADO AL MOVER EL ARCHIVO PDF XXXXX");

@@ -22,6 +22,10 @@ watch('../logic/valid/', {recursive: false},function(filename) {
 	if(!fs.existsSync(filename)){
 		return
 	}
+	setTimeout(delay,5000,filename);
+
+});
+function delay(filename){
 	var args = {
 	  headers:{"Content-Type": "application/json"} 
 	};
@@ -74,7 +78,7 @@ watch('../logic/valid/', {recursive: false},function(filename) {
 		});
 		
 	});
-});
+};
 
 function createObject(serie,rfcEmisor,uuid,folio,xmlFILE,txtFILE,pdfFILE,fileRes,singleFilename,vendorName,domFiscal,rfcReceptor){
 	args = {
