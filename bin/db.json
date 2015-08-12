@@ -1,0 +1,28 @@
+{
+  "email": [
+    {
+      "id": "56EEA675-B574-6F9E-9B99-FDC9A7859516",
+      "seqno": 52,
+      "newFilename": "HDM001017AS1-IHGFCE256210.xml"
+    },
+    {
+      "id": "8878057C-2525-4AD6-94C5-FA573EB2558F",
+      "seqno": 52,
+      "newFilename": "FALLO.xml"
+    },
+    {
+      "id": "14519D36-1D42-4E13-8B0E-0DC47C9B7409",
+      "seqno": 52
+    },
+    {
+      "id": "796190EC-E784-4833-A828-0E75A6591907",
+      "seqno": 52,
+      "newFilename": "DIPH6507197M6-CFDI27737.xml"
+    },
+    {
+      "id": "28858EC8-7D28-4459-862A-781DFB726DAA",
+      "seqno": 52,
+      "newFilename": "FALLO.xml"
+    }
+  ]
+}
