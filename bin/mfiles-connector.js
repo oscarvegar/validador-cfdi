@@ -5,6 +5,11 @@ var mfilesCfg = require("../config/mfiles-cfg");
 var parseString = require('xml2js').parseString;
 var unirest = require('unirest');
 
+var low = require('lowdb')
+var db = low('db.json')
+
+var emailman = require ('./emailManager');
+
 client = new Client();
 var auth = null;
 
@@ -173,7 +178,7 @@ function createObject(serie,rfcEmisor,uuid,folio,xmlFILE,txtFILE,pdfFILE,fileRes
 	    		});
 			
 
-		        if(datosProveedor.Items.length>0 || datosProveedorByNombre.Items.length>0){
+		        if(datosProveedor.Items && (datosProveedor.Items.length>0 || datosProveedorByNombre.Items.length>0)){
 		        	if(datosProveedor.Items.length==0)
 		        		datosProveedor = datosProveedorByNombre;
 		        	var objectList;
@@ -271,6 +276,9 @@ function createObject(serie,rfcEmisor,uuid,folio,xmlFILE,txtFILE,pdfFILE,fileRes
 					    			eliminar("../logic/valid/"+singleFilename+".xml"
 					    				,"../logic/pdf/"+singleFilename+".pdf"
 					    				,"../logic/valid/"+singleFilename+".txt");
+					    			var doc = db('email').find({newFilename:singleFilename+".xml"})
+					    			console.log("SEQNO >>>>> ",doc.seqno)
+					    			emailman.deleteMail(doc.seqno)
 					    			
 					    		}else
 									console.error("XXXXX OCURRIO UN ERROR EN LA CREACION DE FACTURA XXXXX",data.toString())

@@ -88,6 +88,7 @@ function parseUnread() {
           markSeen: self.markSeen
         });
         f.on('message', function(msg, seqno) {
+
           var parser = new MailParser(self.mailParserOptions);
           var attributes = null;
 
@@ -100,7 +101,7 @@ function parseUnread() {
                     callback()
                   } else {
                     attachment.path = path.resolve(self.attachmentOptions.directory + attachment.generatedFileName);
-                    self.emit('attachment', attachment,mail);
+                    self.emit('attachment', attachment,mail,seqno);
                     callback()
                   }
                 });
@@ -112,8 +113,8 @@ function parseUnread() {
               self.emit('mail',mail,seqno,attributes);
             }
           });
-          parser.on("attachment", function (attachment,mail) {
-            self.emit('attachment', attachment,mail);
+          parser.on("attachment", function (attachment,mail,seqno) {
+            self.emit('attachment', attachment,mail,seqno);
           });
           msg.on('body', function(stream, info) {
             stream.pipe(parser);
