@@ -1,7 +1,7 @@
 var Client = require('node-rest-client').Client;
 var fs = require('fs');
 var watch = require('node-watch'); 
-var mfilesCfg = require("../config/mfiles-cfg");
+var mfilesCfg = require("../config/mfiles-cfgdes");
 var parseString = require('xml2js').parseString;
 var unirest = require('unirest');
 

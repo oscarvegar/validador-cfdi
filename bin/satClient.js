@@ -12,12 +12,17 @@ var license = require("../config/license");
 var rutaError = "../logic/error/";
 var rutaNew = "../logic/new/";
 var rutaValid = "../logic/valid/";
+var rutaPDF = "../logic/pdf/";
 
 var crypto = require('crypto'),
     algorithm = 'aes-256-ctr',
     password = 'd6F3Efeq';
 
 var Levenshtein = require('levenshtein');
+
+var low = require('lowdb')
+
+var emailman = require ('./emailManager');
 
 var transporter = nodemailer.createTransport(mailcfg.transporterConfig);
 
@@ -36,7 +41,7 @@ watch(rutaNew, {recursive: false},function(filename) {
 });
 
 function delay(filename,contents){
-	
+	var singleFilename = filename.replace("../logic/new/","").replace(".xml","")
 	parseString(contents, function (err, result) {
 		if(err){
 			console.log("ERROR EN EL PARSEO")
@@ -65,7 +70,9 @@ function delay(filename,contents){
 				console.error("X X X X X ERROR RFC SEMEJANTE X X X X X RFC RECIBIDO>>> "+rfcReceptor+" | RFC PROBABLE >>>"+licencia.rfcLic)
 				sendMailSemejante(rfcReceptor,licencia.rfcLic,re,vendorName,folio);
 				fs.unlink(filename, console.log())
-				fs.unlink(filename.replace(".xml",".pdf").replace("new","pdf"), console.log())
+				fs.unlink(rutaPDF+singleFilename+".pdf", function(args){
+					console.info("SE ELIMINO", singleFilename,".pdf")
+				})
 				return;
 			}else if(licencia.code===-2){
 				console.error("X X X X X ERROR DE LICENCIA X X X X X : "+rfcReceptor)
@@ -80,12 +87,15 @@ function delay(filename,contents){
 					}
 				});
 				fs.unlink(filename, console.log())
-				fs.unlink(filename.replace(".xml",".pdf").replace("new","pdf"), console.log())
+				fs.unlink(rutaPDF+singleFilename+".pdf", function(args){
+					console.info("SE ELIMINO", singleFilename,".pdf")
+				})
 				return;
 			}
 			console.log("EXPRESION IMPRESA >>>>> "+expresionImpresa);
 			var args = {expresionImpresa: expresionImpresa};
 			soap.createClient(url, function(err, client) {
+				if(err)console.error(err)
 				client.Consulta(args, function(err, result) {
 					if(!result){
 						fs.copy(filename, "../logic/error/"+nuevoNombre+".xml", { replace: true },function (err) {
@@ -119,6 +129,14 @@ function delay(filename,contents){
 								
 							}
 							console.log("Moved "+filename+" to valid");
+
+
+							console.log(low('db.json')('email')
+								.chain()
+								.find({id:singleFilename})
+								.assign({newFilename:nuevoNombre+".xml"}).value());
+
+
 							fs.rmrfSync(filename);
 						});
 						/* SE RENOMBRA EL PDF */
@@ -131,7 +149,7 @@ function delay(filename,contents){
 							if (err) {
 								throw err;
 							}
-							console.log("Created "+rutaValid+re+"-"+serie+folio+".txt"+" to valid");
+							console.log("Created "+nuevoNombre+".txt"+" to valid");
 						})
 						
 						
@@ -153,6 +171,25 @@ function delay(filename,contents){
 								console.log('Message sent: ' + info.response);
 							}
 						});
+						console.log("SINGLE FILENAME >>>>>",singleFilename)
+						console.log(low('db.json')('email')
+								.chain()
+								.find({id:singleFilename})
+								.assign({newFilename:"FALLO"+".xml"}).value());
+						try{
+							fs.unlink(rutaNew+singleFilename+".xml", function(args){
+								console.info("SE ELIMINO", singleFilename,".xml")
+							})
+
+							fs.unlink(rutaPDF+nuevoNombre+".pdf", function(args){
+								console.info("SE ELIMINO", nuevoNombre,".pdf")
+							})
+						}catch(err){
+							console.error("ERROR AL BORRAR, ARCHIVO PREVIAMENTE BORRADO")
+						}
+						//emailman.deleteMail(doc.seqno)
+
+
 					}else if(result.ConsultaResult.CodigoEstatus.search(/601/) > -1){
 						console.log("ERROR 601")
 						fse.move(filename, "../logic/error/"+nuevoNombre+".xml", { clobber: true },function (err) {
@@ -313,3 +350,28 @@ function sendMailSemejante(rfc,rfcsem,rfcEmisor,vedorName,folio){
 	});
 
 }
+
+function walk(currentDirPath, callback) {
+    var fs = require('fs'), path = require('path');
+    fs.readdirSync(currentDirPath).forEach(function(name) {
+        var filePath = path.join(currentDirPath, name);
+        var stat = fs.statSync(filePath);
+        if (stat.isFile()) {
+            callback(filePath, stat);
+        } else if (stat.isDirectory()) {
+            walk(filePath, callback);
+        }
+    });
+}
+
+walk("../logic/new", function(filePath, stat) {
+   console.log(filePath, ' init.');
+   if(filePath.search(".xml")<0)return;
+	try{
+		var contents = fs.readFileSync(filePath).toString();
+		setTimeout(delay,5000,filePath,contents);
+	}catch(err){
+		console.log("FILE NOT HERE")
+		return
+	}
+});
