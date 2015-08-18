@@ -13,6 +13,8 @@ var emailman = require ('./emailManager');
 client = new Client();
 var auth = null;
 
+var RUTA_VALID = '../logic/valid/';
+
 client.registerMethod("authenticationtokens",mfilesCfg.mfilesConfig.authenticationTokensURL,"POST");
 client.registerMethod("createObject",mfilesCfg.mfilesConfig.createObjectURL,"POST");
 client.registerMethod("files",mfilesCfg.mfilesConfig.uploadFilesURL,"POST");
@@ -20,7 +22,7 @@ client.registerMethod("createVendor",mfilesCfg.mfilesConfig.createVendorURL+mfil
 
 
 console.log("OBSERVANDO CARPETA logic/valid")
-watch('../logic/valid/', {recursive: false},function(filename) {
+watch(RUTA_VALID, {recursive: false},function(filename) {
 	console.info("* * * INCOMING * * *",filename)
 	if(filename.search(/.xml/)<0)
 		return;
@@ -66,11 +68,11 @@ function delay(filename){
 			client.methods.files(args,function(data,response){
 				console.info("* * * SUBIENDO ARCHIVOS * * *",filename)
 				xmlFILE = JSON.parse(data);
-				var existePDF = fs.existsSync("../logic/pdf/"+singleFilename+".pdf");
+				var existePDF = fs.existsSync(RUTA_VALID+singleFilename+".pdf");
 				if(existePDF){
 					unirest.post(mfilesCfg.mfilesConfig.uploadFilesURL)
 					.headers({"Content-Type": "application/octet-stream","X-Authentication":auth})
-					.attach('file', "../logic/pdf/"+singleFilename+".pdf") // Attachment
+					.attach('file', RUTA_VALID+singleFilename+".pdf") // Attachment
 					.end(function (response) {
 					  pdfFILE = response.body;
 					  createObject(serie,rfcEmisor,uuid,folio,xmlFILE,txtFILE,pdfFILE,fileRes,singleFilename,vendorName,domFiscal,rfcReceptor)
@@ -197,9 +199,9 @@ function createObject(serie,rfcEmisor,uuid,folio,xmlFILE,txtFILE,pdfFILE,fileRes
 					client.methods.createObject(args,function(data,response){
 				    		if(response.statusCode==200){
 								console.info("***** SE CREO NUEVA FACTURA MFILES *****\n ***** ELIMINANDO ARCHIVOS *****",data.toString());
-				    			eliminar("../logic/valid/"+singleFilename+".xml"
-					    				,"../logic/pdf/"+singleFilename+".pdf"
-					    				,"../logic/valid/"+singleFilename+".txt");
+				    			eliminar(RUTA_VALID+singleFilename+".xml"
+					    				,RUTA_VALID+singleFilename+".pdf"
+					    				,RUTA_VALID+singleFilename+".txt");
 				    		}else
 								console.error("XXXXX OCURRIO UN ERROR EN LA CREACION DE FACTURA XXXXX",data.toString())
 					});
@@ -273,9 +275,11 @@ function createObject(serie,rfcEmisor,uuid,folio,xmlFILE,txtFILE,pdfFILE,fileRes
 					    		if(response.statusCode==200){
 									console.info("***** SE CREO NUEVA FACTURA MFILES *****",data.toString())
 					    			console.info("***** ELIMINANDO ARCHIVOS *****");
-					    			eliminar("../logic/valid/"+singleFilename+".xml"
-					    				,"../logic/pdf/"+singleFilename+".pdf"
-					    				,"../logic/valid/"+singleFilename+".txt");
+					    			eliminar(
+					    				 RUTA_VALID+singleFilename+".xml"
+					    				,RUTA_VALID+singleFilename+".pdf"
+					    				,RUTA_VALID+singleFilename+".txt"
+				    				);
 					    			var doc = db('email').find({newFilename:singleFilename+".xml"})
 					    			console.log("SEQNO >>>>> ",doc.seqno)
 					    			emailman.deleteMail(doc.seqno)

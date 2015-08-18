@@ -41,7 +41,6 @@ watch(rutaNew, {recursive: false},function(filename) {
 });
 
 function delay(filename,contents){
-	var singleFilename = filename.replace("../logic/new/","").replace(".xml","")
 	parseString(contents, function (err, result) {
 		if(err){
 			console.log("ERROR EN EL PARSEO")
@@ -52,7 +51,6 @@ function delay(filename,contents){
 			fs.unlink(filename, console.log())
 		}
 		else{
-
 			var serie = result['cfdi:Comprobante']['$']['serie'];
 			var folio = result['cfdi:Comprobante']['$']['folio'];
 			var re = result['cfdi:Comprobante']['cfdi:Emisor'][0]['$']["rfc"];
@@ -62,96 +60,46 @@ function delay(filename,contents){
 			var expresionImpresa = "?re="+re+"&rr="+rr+"&tt="+tt+"&id="+uuid;
 			var rfcReceptor = result['cfdi:Comprobante']['cfdi:Receptor'][0]['$']['rfc'];
 			var vendorName = result['cfdi:Comprobante']['cfdi:Emisor'][0]['$']["nombre"];
-			var defaultName="";
-			if(!folio)
-				var defaultName = uuid+"";
-			var licencia = validarLicencia(rfcReceptor);
-			if(licencia.code===-1){
-				console.error("X X X X X ERROR RFC SEMEJANTE X X X X X RFC RECIBIDO>>> "+rfcReceptor+" | RFC PROBABLE >>>"+licencia.rfcLic)
-				sendMailSemejante(rfcReceptor,licencia.rfcLic,re,vendorName,folio);
-				fs.unlink(filename, console.log())
-				fs.unlink(rutaPDF+singleFilename+".pdf", function(args){
-					console.info("SE ELIMINO", singleFilename,".pdf")
-				})
-				return;
-			}else if(licencia.code===-2){
-				console.error("X X X X X ERROR DE LICENCIA X X X X X : "+rfcReceptor)
-				var options = mailcfg.mailOptions[0].config;
-				options.html = "<b>La factura del emisor "+vendorName+" esta no es cubierta por la licencia.<BR><BR>RFC receptor:"+rfcReceptor+"</b>";
-				options.subject = 'LICENCIA INVALIDA ',
-				transporter.sendMail(options, function(error, info){
-					if(error){
-						console.log(error);
-					}else{
-						console.log('Message sent: ' + info.response);
-					}
-				});
-				fs.unlink(filename, console.log())
-				fs.unlink(rutaPDF+singleFilename+".pdf", function(args){
-					console.info("SE ELIMINO", singleFilename,".pdf")
-				})
-				return;
-			}
+			var singleFilename = uuid;
 			console.log("EXPRESION IMPRESA >>>>> "+expresionImpresa);
 			var args = {expresionImpresa: expresionImpresa};
 			soap.createClient(url, function(err, client) {
-				if(err)console.error(err)
+				if(err){
+					console.error("ERROR AL CREAR CLIENTE SOAP REINTENTANDO >>>>>",err);
+					return delay(filename,contents);
+
+				}
+				if(!client)return delay(filename,contents);
 				client.Consulta(args, function(err, result) {
 					if(!result){
-						fs.copy(filename, "../logic/error/"+nuevoNombre+".xml", { replace: true },function (err) {
-							if (err) {
-								throw err;
-							}
-							console.log("***** MOVIENDO "+filename+" A CARPETA DE ERROR *****");
-							fs.rmrfSync(filename);
-
-						});
-						return;
+						console.error("ERROR EN RESULT,",filename)
+						return delay(filename,contents);;
 					}
-					console.log("result.ConsultaResult ::: ",result.ConsultaResult);
-					console.log(result.ConsultaResult.CodigoEstatus);
-					console.log(result.ConsultaResult.Estado);
+					console.log("result.ConsultaResult > > > > >",result.ConsultaResult);
+					console.log("result.ConsultaResult.CodigoEstatus > > > > >",result.ConsultaResult.CodigoEstatus);
+					console.log("result.ConsultaResult.Estado",result.ConsultaResult.Estado);
 					var comando = "";
-					console.log("serie",serie)
-					console.log("folio",folio)
-					if(!serie)serie="";
-					if(!folio)folio=defaultName;
-					var nuevoNombre = re+"-"+serie+folio;
-					console.log("NUEVO NOMBRE",nuevoNombre);
-					if(fs.existsSync(filename.replace('new','pdf').replace(".xml",".pdf"))){
-						console.info("***** RENOMBRANDO PDF *****")
-						fs.renameSync(filename.replace('new','pdf').replace(".xml",".pdf"), "../logic/pdf/"+nuevoNombre+".pdf")
-					}
+					
 					if(result.ConsultaResult.CodigoEstatus.search(/satisfactoriamente/) > -1 && result.ConsultaResult.Estado == 'Vigente'){
-						fs.copy(filename, rutaValid+nuevoNombre+".xml", { replace: true },function (err) {
-							if (err) {
-								console.log(err)
-								
-							}
-							console.log("Moved "+filename+" to valid");
-
-
-							console.log(low('db.json')('email')
-								.chain()
-								.find({id:singleFilename})
-								.assign({newFilename:nuevoNombre+".xml"}).value());
-
-
-							fs.rmrfSync(filename);
-						});
-						/* SE RENOMBRA EL PDF */
+						fse.move(filename, filename.replace("new","valid"), {clobber:true},function(err){
+						    if(err)console.log(err)
+							console.info("SE MOVIO  "+filename+" A LA RUTA DE DOCUMENTOS VALIDOS");      
+					  	})
 						/* 	SE CREA EL ARCHIVO TXT*/
 						result.status = 0;
-						if(fs.existsSync(rutaError+nuevoNombre+".txt")){
-							fs.rmrfSync(rutaError+nuevoNombre+".txt");
+						if(fs.existsSync(rutaError+singleFilename+".txt")){
+							fs.rmrfSync(rutaError+singleFilename+".txt");
 						}
-						fs.writeFile("../logic/valid/"+nuevoNombre+".txt", JSON.stringify(result), function(err){
+						fs.writeFile(rutaValid+uuid+".txt", JSON.stringify(result), function(err){
 							if (err) {
 								throw err;
 							}
-							console.log("Created "+nuevoNombre+".txt"+" to valid");
+							console.log("SE CREO ARCHIVO "+uuid+".txt"+" EN LA CARPETA VALIDOS");
 						})
-						
+						fse.move(rutaPDF+singleFilename+".pdf", rutaValid+singleFilename+".pdf", {clobber:true},function(err){
+						    if(err)console.log(err)
+							console.info("SE MOVIO PDF "+filename+" A LA RUTA DE DOCUMENTOS VALIDOS");      
+					  	})
 						
 					}else if(result.ConsultaResult.CodigoEstatus.search(/satisfactoriamente/) > -1){
 						var options = mailcfg.mailOptions[0].config;
@@ -171,18 +119,13 @@ function delay(filename,contents){
 								console.log('Message sent: ' + info.response);
 							}
 						});
-						console.log("SINGLE FILENAME >>>>>",singleFilename)
-						console.log(low('db.json')('email')
-								.chain()
-								.find({id:singleFilename})
-								.assign({newFilename:"FALLO"+".xml"}).value());
 						try{
 							fs.unlink(rutaNew+singleFilename+".xml", function(args){
 								console.info("SE ELIMINO", singleFilename,".xml")
 							})
 
-							fs.unlink(rutaPDF+nuevoNombre+".pdf", function(args){
-								console.info("SE ELIMINO", nuevoNombre,".pdf")
+							fs.unlink(rutaPDF+singleFilename+".pdf", function(args){
+								console.info("SE ELIMINO", singleFilename,".pdf")
 							})
 						}catch(err){
 							console.error("ERROR AL BORRAR, ARCHIVO PREVIAMENTE BORRADO")
@@ -192,37 +135,37 @@ function delay(filename,contents){
 
 					}else if(result.ConsultaResult.CodigoEstatus.search(/601/) > -1){
 						console.log("ERROR 601")
-						fse.move(filename, "../logic/error/"+nuevoNombre+".xml", { clobber: true },function (err) {
+						fse.move(filename, "../logic/error/"+singleFilename+".xml", { clobber: true },function (err) {
 							if (err) {
 								return console.error(err) 
 							}
 							console.log("Moved "+filename+" to error");
 							//fs.rmrfSync(filename);
 						});
-						if(!fs.existsSync(rutaError+nuevoNombre+".txt")){
+						if(!fs.existsSync(rutaError+singleFilename+".txt")){
 							result.fechaError = new Date();
 							result.status = -1;
-							fs.writeFile(rutaError+nuevoNombre+".txt", JSON.stringify(result), function(err){
+							fs.writeFile(rutaError+singleFilename+".txt", JSON.stringify(result), function(err){
 								if (err) {
 									throw err;
 								}
-								console.log("Created "+rutaError+nuevoNombre+".txt"+" TO ERROR");
+								console.log("Created "+rutaError+singleFilename+".txt"+" TO ERROR");
 							})
 						}
 					}else if(result.ConsultaResult.CodigoEstatus.search(/602/) > -1){
 						console.log("ERROR 602")
-						fse.move(filename,rutaError+nuevoNombre+".xml",{clobber:true},function(err){
+						fse.move(filename,rutaError+singleFilename+".xml",{clobber:true},function(err){
 							if (err) return console.error(err) 
 								console.log("MOVED"+filename+" TO "+rutaError)
 						})
-						if(!fs.existsSync(rutaError+nuevoNombre+".txt")){
+						if(!fs.existsSync(rutaError+singleFilename+".txt")){
 							result.fechaError = new Date();
 							result.status = -2;
-							fs.writeFile(rutaError+nuevoNombre+".txt", JSON.stringify(result), function(err){
+							fs.writeFile(rutaError+singleFilename+".txt", JSON.stringify(result), function(err){
 								if (err) {
 									throw err;
 								}
-								console.log("Created "+rutaError+nuevoNombre+".txt"+" TO ERROR");
+								console.log("Created "+rutaError+singleFilename+".txt"+" TO ERROR");
 							})
 						}
 					}
@@ -233,30 +176,8 @@ function delay(filename,contents){
 
 }
 
-function validarLicencia(rfc){
-	var com = license.license.rfcs;
-	for(var i in com){
-		if(new Levenshtein( decrypt(com[i]).toLowerCase(), rfc.toLowerCase() ) == 0){
-			return {code:1};
-		}
-	}
-	for(var i in com){
-		var dec = decrypt(com[i]);
-		var distance = new Levenshtein(dec.toLowerCase(), rfc.toLowerCase() );
-		if(distance <= 3){
-			return {code:-1,rfcFac:rfc,rfcLic:dec};
-		}
-	}
-	return {code:-2};
-	
-}
 
-function decrypt(text){
-  var decipher = crypto.createDecipher(algorithm,password)
-  var dec = decipher.update(text,'hex','utf8')
-  dec += decipher.final('utf8');
-  return dec;
-}
+
 
 /*LOGICA PARA REINTENTAR EL ENVIO DE LOS DE ERROR*/
 
@@ -278,7 +199,6 @@ function endsWith(str, suffix) {
 
 function mueveArchivo(elem){
 	if(endsWith(elem,".txt")){
-
 		console.log("Muerve archivos")
 		var file = elem;
 		var fileXML = file.replace(".txt",".xml");
@@ -319,36 +239,6 @@ function mueveArchivo(elem){
 			})
 		}
 	};
-}
-
-function sendMailSemejante(rfc,rfcsem,rfcEmisor,vedorName,folio){
-	var options;
-	for(var i in mailcfg.mailOptions){
-		if(mailcfg.mailOptions[i].rfc == rfc){
-			options = mailcfg.mailOptions[i].config;
-		}
-	}
-	if(!options)
-		options = mailcfg.mailOptions[0].config;
-	options.html = "<b>Se ha recibido una factura con RFC receptor inválido.</b>\
-	<br><br>\
-	RFC RECIBIDO : <b>"+rfc+"</b>\
-	<br>RFC PROBABLE :<b> "+rfcsem+"</b>\
-	<br>RFC EMISOR :<b> "+rfcEmisor+"</b>\
-	<br>NOMBRE EMISOR :<b> "+vedorName+"</b>\
-	<br>FOLIO DE FACTURA :<b> "+folio+"</b>\
-	<br><br>\
-	Verifique con el proveedor de dicha factura.";
-	options.subject = 'Factura Invalida',
-	console.info("ENVIANDO CORREO",options.html)
-	transporter.sendMail(options, function(error, info){
-		if(error){
-			console.log(error);
-		}else{
-			console.log('Message sent: ' + info.response);
-		}
-	});
-
 }
 
 function walk(currentDirPath, callback) {
