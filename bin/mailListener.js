@@ -70,6 +70,7 @@ mailListener.on("mail", function(mail, seqno, attributes){
     }
     Q.all(promises).allSettled(promises).then(function(PDFContents){
       console.info("TERMINA DE LEER PDF'S")
+      //console.log(PDFContents)
       var moves = [];
       for(var i=0;i<parsedXMLS.length;i++){
         var haceMatch = false;
@@ -98,8 +99,25 @@ mailListener.on("mail", function(mail, seqno, attributes){
           }
         } 
         if(haceMatch==false){
-          console.error("NO SE ENCONTRO LA PAREJITA PARA EL ARCHIVO : ",XMLdocuments[i])
-          faltaParejita.push(XMLdocuments[i]);
+          /*INTENTA HACER MATCH POR NOMBRES*/
+          for(var z in PDFdocuments){
+            var pdfdoc = PDFdocuments[z];
+            if(pdfdoc==null)continue;
+            if(pdfdoc.toUpperCase().replace(".PDF","") == XMLdocuments[i].toUpperCase().replace(".XML","")){
+              haceMatch = true;
+              console.info("XML",XMLdocuments[i],"HACE MATCH CON PDF",PDFdocuments[z])
+              moves.push(moveSync(_RUTA_ATTACHMENTS+XMLdocuments[i],_RUTA_NUEVOS+UUIDXML+".xml"))
+              moves.push(moveSync(_RUTA_ATTACHMENTS+PDFdocuments[z], _RUTA_PDF+UUIDXML+".pdf"))
+              PDFdocuments[z] = null;
+              db('email').push({id:UUIDXML,seqno:seqno})
+              break;
+            }
+          }
+          if(haceMatch==false){
+            console.error("NO SE ENCONTRO LA PAREJITA PARA EL ARCHIVO : ",XMLdocuments[i])
+            faltaParejita.push(XMLdocuments[i]);
+          }
+
         }
       }
       Q.all(moves).allSettled(moves).then(function(filenames){
