@@ -282,7 +282,7 @@ function createObject(serie,rfcEmisor,uuid,folio,xmlFILE,txtFILE,pdfFILE,fileRes
 				    				);
 					    			var doc = db('email').find({newFilename:singleFilename+".xml"})
 					    			console.log("SEQNO >>>>> ",doc.seqno)
-					    			emailman.deleteMail(doc.seqno)
+					    			//emailman.deleteMail(doc.seqno)
 					    			
 					    		}else
 									console.error("XXXXX OCURRIO UN ERROR EN LA CREACION DE FACTURA XXXXX",data.toString())
